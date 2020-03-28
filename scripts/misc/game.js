@@ -54,8 +54,8 @@ MyGame.game = (function(screens, objects) {
 
         //
         // add sound effects to all buttons
-        let hoverSound = objects.Sound({src: 'assets/menu-hover.mp3', volume: .55, loop: false});
-        let clickSound = objects.Sound({src: 'assets/menu-click.mp3', volume: .55, loop: false});
+        let hoverSound = objects.Sound({src: 'assets/sounds/menu-hover.mp3', volume: .55, loop: false});
+        let clickSound = objects.Sound({src: 'assets/sounds/menu-click.mp3', volume: .55, loop: false});
         let menuButtons = document.getElementsByTagName('button');
         for (let i = 0; i < menuButtons.length; i++) {
             menuButtons[i].addEventListener('mouseenter', function(){hoverSound.playSound();});

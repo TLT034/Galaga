@@ -38,7 +38,8 @@ MyGame.screens['main-menu'] = (function(game, objects) {
                     document.getElementById('sound-button').innerText = 'Disable Sound';
                 }});
 
-        menuMusic = objects.Sound({src: 'assets/menu-music.mp3', volume: .08, loop: true});
+        menuMusic = objects.Sound({src: 'assets/sounds/menu-music.mp3', volume: .08, loop: true});
+
     }
 
     function run() {

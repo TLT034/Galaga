@@ -1,0 +1,120 @@
+
+body {
+    background: #f5eaea;
+    font-family: Orbitron; /* imported google font */
+}
+
+#game {
+    margin: auto;
+    display: block;
+    width: 1250px;
+    height: 1000px;
+    border-style: solid;
+    border-width: 1px;
+    background-image: url("../assets/images/bg-black.png");
+    background-repeat: no-repeat;
+    background-size: 100%;
+    font-size: 40px;
+}
+
+#game .screen {
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+#game .screen.active {
+    display: block;
+}
+
+#main-menu {
+    padding-top: 1em;
+    font-size: 0.75em;
+}
+
+ul.menu {
+    text-align: center;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+ul.menu li {
+    margin: 0.8em 0;
+}
+
+ul.menu li button {
+    cursor: pointer;
+    font-family: Orbitron; /* imported google font */
+    font-size: 1em;
+    color: #f5eaea;
+    width: 50%;
+    height: 3em;
+    background-image: linear-gradient(to bottom right, rgb(67, 44, 119), rgb(4, 139, 195));
+
+    border: 0.1em solid #4d4646;
+    border-radius: 0.5em;
+    box-shadow: 0.2em 0.2em 0.3em rgb(0, 0, 0);
+}
+
+ul.menu li button:hover {
+    background-image: linear-gradient(to top left, rgb(87, 44, 119), rgb(211, 144, 101), rgb(4, 139, 215));
+}
+
+ul.menu li button:active {
+    color: #CECEF6;
+    background: rgb(0, 0, 0);
+}
+
+#game div h1 {
+    font-size: 3.5em;
+    color: #f5eaea;
+    text-align: center;
+}
+
+#game div p {
+    font-size: 1em;
+    color: #f5eaea;
+}
+
+#credits p {
+    margin-top: -1em;
+    text-align: center;
+    color: #f5eaea;
+}
+#controls p {
+    margin-top: -2.5em;
+    text-align: center;
+}
+
+#game-play {
+    position: relative;
+}
+
+#canvas, #pause-menu, #game-over-menu {
+     position: absolute;
+ }
+
+#pause-menu {
+    margin-top: 5em;
+}
+#game-over-menu {
+    margin-top: 12em;
+}
+
+#high-scores ol {
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: #f5eaea;
+}
+
+#high-score-list {
+    font-size: 1.5em;
+}
+
+#high-scores h1 {
+    margin-bottom: 0;
+}
+

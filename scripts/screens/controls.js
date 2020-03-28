@@ -5,7 +5,7 @@ MyGame.screens['controls'] = (function(game, controls, objects) {
     let buttonMappedSound;
 
     function initialize() {
-        buttonMappedSound = objects.Sound({src: 'assets/menu-click.mp3', volume: .55, loop: false});
+        buttonMappedSound = objects.Sound({src: 'assets/sounds/menu-click.mp3', volume: .55, loop: false});
         // Initialize the controls to the arrow keys
         MyGame.controls['Thrust'] = 'ArrowUp';
         MyGame.controls['Rotate Left'] = 'ArrowLeft';
