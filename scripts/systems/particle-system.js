@@ -1,4 +1,4 @@
-MyGame.particleSystem = function(graphics) {
+MyGame.systems.ParticleSystem = function(graphics) {
     let that = {};
     let backgroundParticles = [];
     let particles = [];
@@ -32,7 +32,7 @@ MyGame.particleSystem = function(graphics) {
 
 
 
-    that.updateBackgroundParticles = function(elapsedTime) {
+    that.backgroundParticles = function(elapsedTime) {
         let sizeAvg = 5.5;
         let sizeStdev = 2;
         let lifeAvg = 500;

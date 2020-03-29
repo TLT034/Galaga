@@ -1,4 +1,4 @@
-MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input, controls, particleSystem) {
+MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input, controls, systems) {
     'use strict';
 
     window.addEventListener("resize", function () {
@@ -7,11 +7,11 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     });
 
     let myKeyboard = input.Keyboard();
-
+    let soundSystem = systems.SoundSystem();
+    let particleSystem = systems.ParticleSystem;
 
     let lastTimeStamp,
-        cancelNextRequest,
-        backgroundMusic;
+        cancelNextRequest;
 
 
     function resetValues() {
@@ -28,7 +28,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     }
 
     function update(elapsedTime) {
-        particleSystem.updateBackgroundParticles(elapsedTime);
+        particleSystem.backgroundParticles(elapsedTime);
     }
 
     function render() {
@@ -50,12 +50,12 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     }
 
     function initialize() {
-        backgroundMusic = objects.Sound({src: 'assets/sounds/menu-music.mp3', volume: .04, loop: true});
+
     }
 
     function run() {
         resetValues();
-        backgroundMusic.playSound();
+        soundSystem.playInGameMusic();
         requestAnimationFrame(gameLoop);
     }
 
@@ -65,4 +65,4 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         run : run,
     };
 
-}(MyGame.game, MyGame.objects, MyGame.render, MyGame.graphics, MyGame.input, MyGame.controls, MyGame.particleSystem));
+}(MyGame.game, MyGame.objects, MyGame.render, MyGame.graphics, MyGame.input, MyGame.controls, MyGame.systems));

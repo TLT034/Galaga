@@ -1,7 +1,7 @@
-MyGame.screens['main-menu'] = (function(game, objects) {
+MyGame.screens['main-menu'] = (function(game, systems) {
     'use strict';
 
-    let menuMusic;
+    let soundSystem = systems.SoundSystem();
 
     function initialize() {
         //
@@ -9,7 +9,7 @@ MyGame.screens['main-menu'] = (function(game, objects) {
         document.getElementById('new-game-button').addEventListener(
             'click',
             function() {
-                menuMusic.stopSound();
+                soundSystem.pauseMenuMusic();
                 game.showScreen('game-play');});
 
         document.getElementById('high-scores-button').addEventListener(
@@ -28,26 +28,24 @@ MyGame.screens['main-menu'] = (function(game, objects) {
             'click',
             function() {
                 if (MyGame.soundEnabled) {
-                    menuMusic.stopSound();
+                    soundSystem.pauseMenuMusic();
                     MyGame.soundEnabled = false;
                     document.getElementById('sound-button').innerText = 'Enable Sound';
                 }
                 else {
                     MyGame.soundEnabled = true;
-                    menuMusic.playSound();
+                    soundSystem.playMenuMusic();
                     document.getElementById('sound-button').innerText = 'Disable Sound';
                 }});
-
-        menuMusic = objects.Sound({src: 'assets/sounds/menu-music.mp3', volume: .08, loop: true});
 
     }
 
     function run() {
-        menuMusic.playSound();
+        soundSystem.playMenuMusic();
     }
 
     return {
         initialize : initialize,
         run : run
     };
-}(MyGame.game, MyGame.objects, MyGame.soundEnabled));
+}(MyGame.game, MyGame.systems));

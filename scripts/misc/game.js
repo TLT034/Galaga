@@ -5,8 +5,10 @@
 //
 // ------------------------------------------------------------------
 
-MyGame.game = (function(screens, objects) {
+MyGame.game = (function(screens, systems) {
     'use strict';
+
+    let soundSystem = systems.SoundSystem();
 
     //------------------------------------------------------------------
     //
@@ -52,14 +54,10 @@ MyGame.game = (function(screens, objects) {
             }
         }
 
-        //
-        // add sound effects to all buttons
-        let hoverSound = objects.Sound({src: 'assets/sounds/menu-hover.mp3', volume: .55, loop: false});
-        let clickSound = objects.Sound({src: 'assets/sounds/menu-click.mp3', volume: .55, loop: false});
         let menuButtons = document.getElementsByTagName('button');
         for (let i = 0; i < menuButtons.length; i++) {
-            menuButtons[i].addEventListener('mouseenter', function(){hoverSound.playSound();});
-            menuButtons[i].addEventListener('click', function(){clickSound.playSound();});
+            menuButtons[i].addEventListener('mouseenter', function(){soundSystem.buttonHover()});
+            menuButtons[i].addEventListener('click', function(){soundSystem.buttonClick()});
         }
 
 
@@ -77,4 +75,4 @@ MyGame.game = (function(screens, objects) {
         showScreen : showScreen,
         toggleDialog : toggleDialog
     };
-}(MyGame.screens, MyGame.objects));
+}(MyGame.screens, MyGame.systems));
