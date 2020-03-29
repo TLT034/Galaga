@@ -23,7 +23,6 @@ MyGame.systems.ParticleSystem = function(graphics) {
         };
 
         that.draw = function() {
-            //graphics.drawRectangle(spec);
             graphics.drawTexture(spec.image, spec.center, spec.rotation, spec.size);
         };
 
@@ -33,10 +32,16 @@ MyGame.systems.ParticleSystem = function(graphics) {
 
 
     that.backgroundParticles = function(elapsedTime) {
-        let sizeAvg = 5.5;
-        let sizeStdev = 2;
-        let lifeAvg = 500;
-        let liveStdev = 300;
+        // Size, lifetime, Speed of particles are all relative to canvas
+        // size to make the game feel the same no matter the size of canvas.
+        let sizeAvg = graphics.canvas.width/212;
+        console.log(sizeAvg);
+        let sizeStdev = graphics.canvas.width/585;
+        console.log(sizeStdev);
+        let lifeAvg = Math.floor(graphics.canvas.width/2.5);
+        let lifeStdev = Math.floor(graphics.canvas.width/4);
+        let speed = graphics.canvas.width/3900;
+
         let starImage = new Image();
         starImage.src = 'assets/images/star.png';
 
@@ -55,9 +60,9 @@ MyGame.systems.ParticleSystem = function(graphics) {
                 center: { x: Random.nextRange(0, graphics.canvas.width), y: Random.nextRange(0, graphics.canvas.height)},
                 size: {width: size, height: size},
                 rotation: 0,
-                speed: 0.3,
+                speed: speed,
                 direction: {x: 0, y: 1},
-                lifetime: Random.nextGaussian(lifeAvg, liveStdev)
+                lifetime: Random.nextGaussian(lifeAvg, lifeStdev)
             });
             backgroundParticles.push(p);
         }
