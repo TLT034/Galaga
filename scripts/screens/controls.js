@@ -7,21 +7,21 @@ MyGame.screens['controls'] = (function(game, controls, objects) {
     function initialize() {
         buttonMappedSound = objects.Sound({src: 'assets/sounds/menu-click.mp3', volume: .55, loop: false});
         // Initialize the controls to the arrow keys
-        MyGame.controls['Thrust'] = 'ArrowUp';
-        MyGame.controls['Rotate Left'] = 'ArrowLeft';
-        MyGame.controls['Rotate Right'] = 'ArrowRight';
+        MyGame.controls['Shoot'] = ' ';
+        MyGame.controls['Move Left'] = 'ArrowLeft';
+        MyGame.controls['Move Right'] = 'ArrowRight';
 
-        document.getElementById('thrust-map-button').addEventListener(
+        document.getElementById('shoot-map-button').addEventListener(
             'click',
-            function() { mapControl('Thrust'); });
+            function() { mapControl('Shoot'); });
 
         document.getElementById('left-map-button').addEventListener(
             'click',
-            function() { mapControl('Rotate Left'); });
+            function() { mapControl('Move Left'); });
 
         document.getElementById('right-map-button').addEventListener(
             'click',
-            function() { mapControl('Rotate Right'); });
+            function() { mapControl('Move Right'); });
 
         document.getElementById('controls-back-button').addEventListener(
             'click',
@@ -32,46 +32,57 @@ MyGame.screens['controls'] = (function(game, controls, objects) {
     }
 
     function run() {
-        document.getElementById('thrust-map-button').innerText = `Thrust: ${controls.Thrust}`;
-        document.getElementById('left-map-button').innerText = `Rotate Left: ${controls['Rotate Left']}`;
-        document.getElementById('right-map-button').innerText = `Rotate Right: ${controls['Rotate Right']}`;
+        if (controls.Shoot === ' ') {
+            document.getElementById('shoot-map-button').innerText = `Shoot: Space`;
+        }
+        else {
+            document.getElementById('shoot-map-button').innerText = `Shoot: ${controls.Shoot}`;
+        }
+        document.getElementById('left-map-button').innerText = `Move Left: ${controls['Move Left']}`;
+        document.getElementById('right-map-button').innerText = `Move Right: ${controls['Move Right']}`;
+        window.onkeydown = function(event) {
+            if (event.code === 'Space') {
+                event.preventDefault();
+            }
+        }
     }
 
 
     function mapControl(control) {
         waitingForInput = true;
         switch (control) {
-            case 'Thrust':
-                document.getElementById('thrust-map-button').innerText = `Thrust: Press a Key`;
+            case 'Shoot':
+                document.getElementById('shoot-map-button').innerText = `Shoot: Press a Key`;
                 break;
-            case 'Rotate Left':
-                document.getElementById('left-map-button').innerText = `Rotate Left: Press a Key`;
+            case 'Move Left':
+                document.getElementById('left-map-button').innerText = `Move Left: Press a Key`;
                 break;
-            case 'Rotate Right':
-                document.getElementById('right-map-button').innerText = `Rotate Right: Press a Key`;
+            case 'Move Right':
+                document.getElementById('right-map-button').innerText = `Move Right: Press a Key`;
                 break;
         }
+
+        window.addEventListener('keyup', addKey);
 
         function addKey(event) {
-            controls[control] = event.key;
-            waitingForInput = false;
-            buttonMappedSound.playSound();
-        }
-
-        window.addEventListener('keydown', addKey);
-
-        function checkForInput(time) {
             if (waitingForInput) {
-                requestAnimationFrame(checkForInput);
+                controls[control] = event.key;
+                console.log(controls);
+                buttonMappedSound.playSound();
+            }
+
+            window.removeEventListener('keyup', addKey);
+            if (controls.Shoot === ' ') {
+                document.getElementById('shoot-map-button').innerText = `Shoot: Space`;
             }
             else {
-                window.removeEventListener('keydown', addKey);
-                document.getElementById('thrust-map-button').innerText = `Thrust: ${controls.Thrust}`;
-                document.getElementById('left-map-button').innerText = `Rotate Left: ${controls['Rotate Left']}`;
-                document.getElementById('right-map-button').innerText = `Rotate Right: ${controls['Rotate Right']}`;
+                document.getElementById('shoot-map-button').innerText = `Shoot: ${controls.Shoot}`;
             }
+            document.getElementById('left-map-button').innerText = `Move Left: ${controls['Move Left']}`;
+            document.getElementById('right-map-button').innerText = `Move Right: ${controls['Move Right']}`;
         }
-        checkForInput();
+
+
     }
 
 

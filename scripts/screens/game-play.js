@@ -1,6 +1,11 @@
 MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input, controls, particleSystem) {
     'use strict';
 
+    window.addEventListener("resize", function () {
+        graphics.canvas.width = document.getElementById('game').clientWidth;
+        graphics.canvas.height = document.getElementById('game').clientHeight;
+    });
+
     let myKeyboard = input.Keyboard();
 
 
@@ -10,6 +15,8 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
 
 
     function resetValues() {
+        graphics.canvas.width = document.getElementById('game').clientWidth;
+        graphics.canvas.height = document.getElementById('game').clientHeight;
         lastTimeStamp = performance.now();
         cancelNextRequest = false;
     }

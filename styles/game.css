@@ -5,16 +5,25 @@ body {
 }
 
 #game {
+    width: 90vh;
+    height: 90vh;
+    min-width: 600px;
+    min-height: 600px;
     margin: auto;
     display: block;
-    width: 1250px;
-    height: 1000px;
     border-style: solid;
     border-width: 1px;
     background-image: url("../assets/images/bg-black.png");
     background-repeat: no-repeat;
     background-size: 100%;
-    font-size: 40px;
+    font-size: 4vh;
+    color: #f5eaea;
+    text-align: center;
+}
+
+#canvas {
+    top: 0;
+    left: 0;
 }
 
 #game .screen {
@@ -27,10 +36,6 @@ body {
     display: block;
 }
 
-#main-menu {
-    padding-top: 1em;
-    font-size: 0.75em;
-}
 
 ul.menu {
     text-align: center;
@@ -40,7 +45,7 @@ ul.menu {
 }
 
 ul.menu li {
-    margin: 0.8em 0;
+    margin-top: 3%;
 }
 
 ul.menu li button {
@@ -49,7 +54,9 @@ ul.menu li button {
     font-size: 1em;
     color: #f5eaea;
     width: 50%;
-    height: 3em;
+    height: 7.5vh;
+    min-width: 300px;
+    min-height: 50px;
     background-image: linear-gradient(to bottom right, rgb(67, 44, 119), rgb(4, 139, 195));
 
     border: 0.1em solid #4d4646;
@@ -66,25 +73,28 @@ ul.menu li button:active {
     background: rgb(0, 0, 0);
 }
 
-#game div h1 {
-    font-size: 3.5em;
+#game h1 {
+    font-size: 4em;
     color: #f5eaea;
     text-align: center;
+    margin: 0;
+    padding: 0;
 }
 
-#game div p {
-    font-size: 1em;
-    color: #f5eaea;
+#main-menu h1 {
+    margin: 5% 0 10% 0;
 }
 
+#credits h1 {
+    margin: 5% 0 10% 0;
+}
 #credits p {
-    margin-top: -1em;
-    text-align: center;
-    color: #f5eaea;
+    margin: 0 0 2% 0;
+    padding: 0;
 }
-#controls p {
-    margin-top: -2.5em;
-    text-align: center;
+
+#controls li button {
+    font-size: .75em;
 }
 
 #game-play {

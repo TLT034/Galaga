@@ -62,6 +62,10 @@ MyGame.game = (function(screens, objects) {
             menuButtons[i].addEventListener('click', function(){clickSound.playSound();});
         }
 
+
+
+
+
         //
         // Make the main-menu screen the active one
         showScreen('main-menu');
