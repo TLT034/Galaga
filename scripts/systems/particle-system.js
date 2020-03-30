@@ -1,7 +1,6 @@
 MyGame.systems.ParticleSystem = function(graphics) {
     let that = {};
-    let backgroundParticles = [];
-    let particles = [];
+    let bgParticles = [];
 
 
     // Create individual particle
@@ -19,7 +18,15 @@ MyGame.systems.ParticleSystem = function(graphics) {
 
             spec.rotation += spec.speed * 0.5;
 
-            return spec.alive < spec.lifetime;
+            let keepParticle = true;
+
+            // remove particle if it has been alive longer than its lifetime or if it is outside the canvas
+            if (spec.alive > spec.lifetime || spec.center.x < 0 || spec.center.y < 0 ||
+                spec.center.x > graphics.canvas.width || spec.center.y > graphics.canvas.height) {
+                keepParticle = false;
+            }
+
+            return keepParticle;
         };
 
         that.draw = function() {
@@ -35,9 +42,7 @@ MyGame.systems.ParticleSystem = function(graphics) {
         // Size, lifetime, Speed of particles are all relative to canvas
         // size to make the game feel the same no matter the size of canvas.
         let sizeAvg = graphics.canvas.width/212;
-        console.log(sizeAvg);
         let sizeStdev = graphics.canvas.width/585;
-        console.log(sizeStdev);
         let lifeAvg = Math.floor(graphics.canvas.width/2.5);
         let lifeStdev = Math.floor(graphics.canvas.width/4);
         let speed = graphics.canvas.width/3900;
@@ -46,12 +51,12 @@ MyGame.systems.ParticleSystem = function(graphics) {
         starImage.src = 'assets/images/star.png';
 
         let keepMe = [];
-        for (let i = 0; i < backgroundParticles.length; i++) {
-            if (backgroundParticles[i].update(elapsedTime)) {
-                keepMe.push(backgroundParticles[i]);
+        for (let i = 0; i < bgParticles.length; i++) {
+            if (bgParticles[i].update(elapsedTime)) {
+                keepMe.push(bgParticles[i]);
             }
         }
-        backgroundParticles = keepMe;
+        bgParticles = keepMe;
 
         for (let i = 0; i < 2; i++) {
             let size = Math.abs(Random.nextGaussian(sizeAvg, sizeStdev));
@@ -64,22 +69,15 @@ MyGame.systems.ParticleSystem = function(graphics) {
                 direction: {x: 0, y: 1},
                 lifetime: Random.nextGaussian(lifeAvg, lifeStdev)
             });
-            backgroundParticles.push(p);
+            bgParticles.push(p);
         }
     };
 
 
-
-    that.clearParticles = function() {
-        particles = [];
-    };
 
     that.render = function() {
-        for (let p = particles.length - 1; p >= 0; p--) {
-            particles[p].draw();
-        }
-        for (let bp = backgroundParticles.length - 1; bp >= 0; bp--) {
-            backgroundParticles[bp].draw();
+        for (let bp = bgParticles.length - 1; bp >= 0; bp--) {
+            bgParticles[bp].draw();
         }
     };
 

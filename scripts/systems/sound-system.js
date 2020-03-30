@@ -31,7 +31,13 @@ MyGame.systems.SoundSystem = function() {
             src: 'assets/sounds/menu-click.mp3',
             volume: .55,
             loop: false
-        }
+        },
+        playerShoot: {
+            audioElement: document.createElement('audio'),
+            src: 'assets/sounds/player-shoot.mp3',
+            volume: 1,
+            loop: false
+        },
     };
 
     // Initialize the html audio elements
@@ -79,6 +85,12 @@ MyGame.systems.SoundSystem = function() {
     that.pauseInGameMusic = function () {
         if (MyGame.soundEnabled) {
             sounds.inGameMusic.audioElement.pause();
+        }
+    };
+
+    that.playerShoot = function () {
+        if (MyGame.soundEnabled) {
+            sounds.playerShoot.audioElement.play();
         }
     };
 
