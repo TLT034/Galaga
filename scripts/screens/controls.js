@@ -1,8 +1,7 @@
-MyGame.screens['controls'] = (function(game, controls, systems) {
+MyGame.screens['controls'] = (function(game, controls, soundSystem) {
     'use strict';
 
     let waitingForInput = false;
-    let soundSystem = systems.SoundSystem();
 
     function initialize() {
         // Initialize the controls to the arrow keys
@@ -92,4 +91,4 @@ MyGame.screens['controls'] = (function(game, controls, systems) {
         initialize : initialize,
         run : run
     };
-}(MyGame.game, MyGame.controls, MyGame.systems));
+}(MyGame.game, MyGame.controls, MyGame.systems.SoundSystem));

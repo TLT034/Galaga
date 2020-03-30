@@ -1,4 +1,4 @@
-MyGame.systems.ParticleSystem = function(graphics) {
+MyGame.systems.ParticleSystem = function(graphics, images) {
     let that = {};
     let bgParticles = [];
 
@@ -47,9 +47,6 @@ MyGame.systems.ParticleSystem = function(graphics) {
         let lifeStdev = Math.floor(graphics.canvas.width/4);
         let speed = graphics.canvas.width/3900;
 
-        let starImage = new Image();
-        starImage.src = 'assets/images/star.png';
-
         let keepMe = [];
         for (let i = 0; i < bgParticles.length; i++) {
             if (bgParticles[i].update(elapsedTime)) {
@@ -61,7 +58,7 @@ MyGame.systems.ParticleSystem = function(graphics) {
         for (let i = 0; i < 2; i++) {
             let size = Math.abs(Random.nextGaussian(sizeAvg, sizeStdev));
             let p = create({
-                image: starImage,
+                image: images['star'],
                 center: { x: Random.nextRange(0, graphics.canvas.width), y: Random.nextRange(0, graphics.canvas.height)},
                 size: {width: size, height: size},
                 rotation: 0,
@@ -83,4 +80,4 @@ MyGame.systems.ParticleSystem = function(graphics) {
 
 
     return that;
-}(MyGame.graphics);
+}(MyGame.graphics, MyGame.assets.images);

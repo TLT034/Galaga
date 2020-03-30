@@ -14,10 +14,7 @@ MyGame.render.Bullet = (function(graphics) {
     'use strict';
 
     function render(spec) {
-        if (spec.imageReady) {
-            //console.log(spec);
-            graphics.drawTexture(spec.image, spec.center, spec.rotation, spec.size);
-        }
+        graphics.drawTexture(spec.image, spec.center, spec.rotation, spec.size);
     }
 
     return {

@@ -1,4 +1,4 @@
-MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input, controls, systems) {
+MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input, controls, systems, images) {
     'use strict';
 
     window.addEventListener("resize", function () {
@@ -8,7 +8,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     });
 
     let myKeyboard = input.Keyboard();
-    let soundSystem = systems.SoundSystem();
+    let soundSystem = systems.SoundSystem;
     let particleSystem = systems.ParticleSystem;
 
     let lastTimeStamp,
@@ -22,7 +22,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         lastTimeStamp = performance.now();
         cancelNextRequest = false;
         playerShip = objects.PlayerShip({
-            imageSrc: 'assets/images/player-ship.png',
+            image: images['playerShip'],
             center: { x: graphics.canvas.width/2, y: graphics.canvas.height - graphics.canvas.height/7 },
             rotation: 0,
             size: {width: graphics.canvas.width/10, height: graphics.canvas.height/10},
@@ -110,7 +110,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     function run() {
         resetValues();
         shipControlsOn();
-        soundSystem.playInGameMusic();
+        soundSystem.playMusic(MyConstants.soundSettings.inGameMusic.VOLUME);
         requestAnimationFrame(gameLoop);
     }
 
@@ -120,4 +120,4 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         run : run,
     };
 
-}(MyGame.game, MyGame.objects, MyGame.render, MyGame.graphics, MyGame.input, MyGame.controls, MyGame.systems));
+}(MyGame.game, MyGame.objects, MyGame.render, MyGame.graphics, MyGame.input, MyGame.controls, MyGame.systems, MyGame.assets.images));

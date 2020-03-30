@@ -1,98 +1,52 @@
 // --------------------------------------------------------------
 // spec = { src: , volume: , loop: }
 // --------------------------------------------------------------
-MyGame.systems.SoundSystem = function() {
+MyGame.systems.SoundSystem = function(sounds) {
     'use strict';
 
     let that = {};
 
-    // All sound constants in the game
-    const sounds = {
-        menuMusic: {
-            audioElement: document.createElement('audio'),
-            src: 'assets/sounds/menu-music.mp3',
-            volume: .08,
-            loop: true
-        },
-        inGameMusic: {
-            audioElement: document.createElement('audio'),
-            src: 'assets/sounds/menu-music.mp3',
-            volume: .04,
-            loop: true
-        },
-        buttonHover: {
-            audioElement: document.createElement('audio'),
-            src: 'assets/sounds/menu-hover.mp3',
-            volume: .55,
-            loop: false
-        },
-        buttonClick: {
-            audioElement: document.createElement('audio'),
-            src: 'assets/sounds/menu-click.mp3',
-            volume: .55,
-            loop: false
-        },
-        playerShoot: {
-            audioElement: document.createElement('audio'),
-            src: 'assets/sounds/player-shoot.mp3',
-            volume: 1,
-            loop: false
-        },
+    // Initialize constant volume and loop setting for constant sound effects
+    sounds['buttonHover'].volume = MyConstants.soundSettings.buttonHover.VOLUME;
+    sounds['buttonHover'].loop = MyConstants.soundSettings.buttonHover.LOOP;
+    sounds['buttonClick'].volume = MyConstants.soundSettings.buttonClick.VOLUME;
+    sounds['buttonClick'].loop = MyConstants.soundSettings.buttonClick.LOOP;
+    sounds['playerShoot'].volume = MyConstants.soundSettings.playerShoot.VOLUME;
+    sounds['playerShoot'].loop = MyConstants.soundSettings.playerShoot.LOOP;
+    sounds['music'].loop = MyConstants.soundSettings.menuMusic.LOOP;
+
+
+    that.playMusic = function (volume) {
+        if (MyGame.soundEnabled) {
+            sounds['music'].volume = volume;
+            sounds['music'].play();
+        }
     };
 
-    // Initialize the html audio elements
-    for (const sound in sounds) {
-        sounds[sound].audioElement.src = sounds[sound].src;
-        sounds[sound].audioElement.volume = sounds[sound].volume;
-        sounds[sound].audioElement.loop = sounds[sound].loop;
-        sounds[sound].audioElement.setAttribute('preload', 'auto');
-        sounds[sound].audioElement.setAttribute('controls', 'none');
-        sounds[sound].audioElement.style.display = 'none';
-        document.body.appendChild(sounds[sound].audioElement);
-    }
+    that.pauseMusic = function () {
+        if (MyGame.soundEnabled) {
+            sounds['music'].pause();
+        }
+    };
 
 
     that.buttonHover = function () {
         if (MyGame.soundEnabled) {
-            sounds.buttonHover.audioElement.play();
+            sounds['buttonHover'].play();
         }
     };
 
     that.buttonClick = function () {
         if (MyGame.soundEnabled) {
-            sounds.buttonClick.audioElement.play();
-        }
-    };
-
-    that.playMenuMusic = function () {
-        if (MyGame.soundEnabled) {
-            sounds.menuMusic.audioElement.play();
-        }
-    };
-
-    that.pauseMenuMusic = function () {
-        if (MyGame.soundEnabled) {
-            sounds.menuMusic.audioElement.pause();
-        }
-    };
-
-    that.playInGameMusic = function () {
-        if (MyGame.soundEnabled) {
-            sounds.inGameMusic.audioElement.play();
-        }
-    };
-
-    that.pauseInGameMusic = function () {
-        if (MyGame.soundEnabled) {
-            sounds.inGameMusic.audioElement.pause();
+            sounds['buttonClick'].play();
         }
     };
 
     that.playerShoot = function () {
         if (MyGame.soundEnabled) {
-            sounds.playerShoot.audioElement.play();
+            sounds['playerShoot'].play();
         }
     };
 
     return that;
-};
+}(MyGame.assets.sounds);

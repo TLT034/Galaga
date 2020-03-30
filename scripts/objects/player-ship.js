@@ -3,7 +3,7 @@
 // Creates a PlayerShip object, with functions for managing state.
 //
 // spec = {
-//         imageSrc: image,
+//         image: image asset,
 //         center: { x: , y: },
 //         size: { width: , height:  },
 //         speed: float,
@@ -16,13 +16,6 @@
 // --------------------------------------------------------------
 MyGame.objects.PlayerShip = function(spec) {
     'use strict';
-
-    let imageReady = false;
-    let image = new Image();
-    image.onload = function() {
-        imageReady = true;
-    };
-    image.src = spec.imageSrc;
 
 
     function moveLeft(elapsedTime) {
@@ -40,7 +33,7 @@ MyGame.objects.PlayerShip = function(spec) {
 
             spec.shootSound();
             spec.shots.push(MyGame.objects.Bullet({
-                imageSrc: 'assets/images/player-bullet.png',
+                image: MyGame.assets.images['playerBullet'],
                 center: { x: spec.center.x, y: spec.center.y - spec.size.height/2},
                 size: { width: 5, height: 20},
                 speed: 1,
@@ -55,7 +48,6 @@ MyGame.objects.PlayerShip = function(spec) {
 
 
 
-
     return {
         moveLeft: moveLeft,
         moveRight: moveRight,
@@ -63,8 +55,7 @@ MyGame.objects.PlayerShip = function(spec) {
         updateShots: updateShots,
 
         get shots() { return spec.shots; },
-        get imageReady() { return imageReady; },
-        get image() { return image; },
+        get image() { return spec.image; },
         get center() { return spec.center; },
         get size() { return spec.size; },
 

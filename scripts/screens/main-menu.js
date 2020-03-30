@@ -1,7 +1,6 @@
-MyGame.screens['main-menu'] = (function(game, systems) {
+MyGame.screens['main-menu'] = (function(game, soundSystem, ) {
     'use strict';
 
-    let soundSystem = systems.SoundSystem();
 
     function initialize() {
         //
@@ -9,7 +8,7 @@ MyGame.screens['main-menu'] = (function(game, systems) {
         document.getElementById('new-game-button').addEventListener(
             'click',
             function() {
-                soundSystem.pauseMenuMusic();
+                soundSystem.pauseMusic();
                 game.showScreen('game-play');});
 
         document.getElementById('high-scores-button').addEventListener(
@@ -28,24 +27,23 @@ MyGame.screens['main-menu'] = (function(game, systems) {
             'click',
             function() {
                 if (MyGame.soundEnabled) {
-                    soundSystem.pauseMenuMusic();
+                    soundSystem.pauseMusic(MyConstants.soundSettings.menuMusic.VOLUME);
                     MyGame.soundEnabled = false;
                     document.getElementById('sound-button').innerText = 'Enable Sound';
                 }
                 else {
                     MyGame.soundEnabled = true;
-                    soundSystem.playMenuMusic();
+                    soundSystem.playMusic(MyConstants.soundSettings.menuMusic.VOLUME);
                     document.getElementById('sound-button').innerText = 'Disable Sound';
                 }});
-
     }
 
     function run() {
-        soundSystem.playMenuMusic();
+        soundSystem.playMusic(MyConstants.soundSettings.menuMusic.VOLUME);
     }
 
     return {
         initialize : initialize,
         run : run
     };
-}(MyGame.game, MyGame.systems));
+}(MyGame.game, MyGame.systems.SoundSystem));

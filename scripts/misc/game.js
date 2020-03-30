@@ -5,10 +5,8 @@
 //
 // ------------------------------------------------------------------
 
-MyGame.game = (function(screens, systems) {
+MyGame.game = (function(screens, soundSystem) {
     'use strict';
-
-    let soundSystem = systems.SoundSystem();
 
     //------------------------------------------------------------------
     //
@@ -75,4 +73,4 @@ MyGame.game = (function(screens, systems) {
         showScreen : showScreen,
         toggleDialog : toggleDialog
     };
-}(MyGame.screens, MyGame.systems));
+}(MyGame.screens, MyGame.systems.SoundSystem));
