@@ -25,8 +25,11 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
             image: images['playerShip'],
             center: { x: graphics.canvas.width/2, y: graphics.canvas.height - graphics.canvas.height/7 },
             rotation: 0,
-            size: {width: graphics.canvas.width/10, height: graphics.canvas.height/10},
-            speed: graphics.canvas.width/1700,
+            size: {
+                width: graphics.canvas.width * MyConstants.playerShip.WIDTH,
+                height: graphics.canvas.height * MyConstants.playerShip.HEIGHT
+            },
+            speed: graphics.canvas.width * MyConstants.playerShip.SPEED,
             shots: [],
             shootSound: soundSystem.playerShoot,
             shootFrequency: 300,

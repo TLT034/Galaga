@@ -41,11 +41,11 @@ MyGame.systems.ParticleSystem = function(graphics, images) {
     that.backgroundParticles = function(elapsedTime) {
         // Size, lifetime, Speed of particles are all relative to canvas
         // size to make the game feel the same no matter the size of canvas.
-        let sizeAvg = graphics.canvas.width/212;
-        let sizeStdev = graphics.canvas.width/585;
-        let lifeAvg = Math.floor(graphics.canvas.width/2.5);
-        let lifeStdev = Math.floor(graphics.canvas.width/4);
-        let speed = graphics.canvas.width/3900;
+        let sizeAvg = graphics.canvas.width * MyConstants.star.AVG_SIZE;
+        let sizeStdev = graphics.canvas.width * MyConstants.star.STDEV_SIZE;
+        let lifeAvg = Math.floor(graphics.canvas.width * MyConstants.star.AVG_LIFE);
+        let lifeStdev = Math.floor(graphics.canvas.width * MyConstants.star.STDEV_LIFE);
+        let speed = graphics.canvas.width * MyConstants.star.SPEED;
 
         let keepMe = [];
         for (let i = 0; i < bgParticles.length; i++) {

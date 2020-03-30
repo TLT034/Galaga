@@ -5,11 +5,29 @@
 //----------------------------------------
 let MyConstants = Object.freeze({
     //----------------------------------------------------------------
-    // Sizes (as percentage of canvas size) of all in game graphics.
+    // Values are a percentage of canvas size. This allows the game
+    // to feel the same no matter the size of the canvas.
     //----------------------------------------------------------------
-    sizes: {
-
+    star: {
+        AVG_SIZE: .004717,
+        STDEV_SIZE: .00171,
+        AVG_LIFE: .4,
+        STDEV_LIFE: .25,
+        SPEED: .000256
     },
+    playerShip: {
+        WIDTH: .1,
+        HEIGHT: .1,
+        SPEED: .000588,
+    },
+    playerBullet: {
+        WIDTH: .00428,
+        HEIGHT: .01712,
+        SPEED: .000856,
+    },
+
+
+
     //----------------------------------------------------------------
     // Volume and loop settings for all sound effects.
     //----------------------------------------------------------------

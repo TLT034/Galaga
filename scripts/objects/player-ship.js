@@ -35,8 +35,11 @@ MyGame.objects.PlayerShip = function(spec) {
             spec.shots.push(MyGame.objects.Bullet({
                 image: MyGame.assets.images['playerBullet'],
                 center: { x: spec.center.x, y: spec.center.y - spec.size.height/2},
-                size: { width: 5, height: 20},
-                speed: 1,
+                size: {
+                    width: MyGame.graphics.canvas.width * MyConstants.playerBullet.WIDTH,
+                    height: MyGame.graphics.canvas.height * MyConstants.playerBullet.HEIGHT
+                },
+                speed: MyGame.graphics.canvas.width * MyConstants.playerBullet.SPEED,
                 rotation: 0,
             }));
         }
