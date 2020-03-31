@@ -1,22 +1,17 @@
 MyGame.systems.ParticleSystem = function(graphics, images) {
-    let that = {};
     let bgParticles = [];
 
 
-    // Create individual particle
+    // Creates an individual particle
     function create(spec) {
         let that = {};
 
-        spec.fill = 'rgb(255, 255, 255)';
-        spec.stroke = 'rgb(0, 0, 0)';
-        spec.alive = 0;
-
-        that.update = function(elapsedTime) {
+        function update(elapsedTime) {
             spec.center.x += (spec.speed * spec.direction.x * elapsedTime);
             spec.center.y += (spec.speed * spec.direction.y * elapsedTime);
             spec.alive += elapsedTime;
 
-            spec.rotation += spec.speed * 0.5;
+            spec.rotation += spec.speed * elapsedTime * .01;
 
             let keepParticle = true;
 
@@ -27,26 +22,21 @@ MyGame.systems.ParticleSystem = function(graphics, images) {
             }
 
             return keepParticle;
-        };
+        }
 
-        that.draw = function() {
-            graphics.drawTexture(spec.image, spec.center, spec.rotation, spec.size);
-        };
+        return {
+            update: update,
 
-        return that;
+            get image() {return spec.image},
+            get center() {return spec.center},
+            get rotation() {return spec.rotation},
+            get size() {return spec.size},
+        };
     }
 
 
-
-    that.backgroundParticles = function(elapsedTime) {
-        // Size, lifetime, Speed of particles are all relative to canvas
-        // size to make the game feel the same no matter the size of canvas.
-        let sizeAvg = graphics.canvas.width * MyConstants.star.AVG_SIZE;
-        let sizeStdev = graphics.canvas.width * MyConstants.star.STDEV_SIZE;
-        let lifeAvg = Math.floor(graphics.canvas.width * MyConstants.star.AVG_LIFE);
-        let lifeStdev = Math.floor(graphics.canvas.width * MyConstants.star.STDEV_LIFE);
-        let speed = graphics.canvas.width * MyConstants.star.SPEED;
-
+    // Updates background star particles
+    function stars(elapsedTime) {
         let keepMe = [];
         for (let i = 0; i < bgParticles.length; i++) {
             if (bgParticles[i].update(elapsedTime)) {
@@ -55,11 +45,17 @@ MyGame.systems.ParticleSystem = function(graphics, images) {
         }
         bgParticles = keepMe;
 
-        for (let i = 0; i < 2; i++) {
+        if (bgParticles.length < 50) {
+            let sizeAvg = graphics.canvas.width * MyConstants.star.AVG_SIZE;
+            let sizeStdev = graphics.canvas.width * MyConstants.star.STDEV_SIZE;
             let size = Math.abs(Random.nextGaussian(sizeAvg, sizeStdev));
+            let lifeAvg = Math.floor(graphics.canvas.width * MyConstants.star.AVG_LIFE);
+            let lifeStdev = Math.floor(graphics.canvas.width * MyConstants.star.STDEV_LIFE);
+            let speed = graphics.canvas.width * MyConstants.star.SPEED * elapsedTime;
+
             let p = create({
                 image: images['star'],
-                center: { x: Random.nextRange(0, graphics.canvas.width), y: Random.nextRange(0, graphics.canvas.height)},
+                center: { x: Random.nextRange(0, graphics.canvas.width), y: Random.nextRange(0, graphics.canvas.height/4)},
                 size: {width: size, height: size},
                 rotation: 0,
                 speed: speed,
@@ -68,16 +64,16 @@ MyGame.systems.ParticleSystem = function(graphics, images) {
             });
             bgParticles.push(p);
         }
-    };
+    }
 
 
+    return {
+        stars: stars,
 
-    that.render = function() {
-        for (let bp = bgParticles.length - 1; bp >= 0; bp--) {
-            bgParticles[bp].draw();
+        get particles() {
+            // when more particles return this instead of just bgParticles
+            // return bgParticles.concat(otherParticles, otherParticles1,..., otherParticlesn)
+            return bgParticles;
         }
     };
-
-
-    return that;
 }(MyGame.graphics, MyGame.assets.images);

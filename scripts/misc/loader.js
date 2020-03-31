@@ -43,7 +43,7 @@ MyGame.loader = (function() {
             onComplete: null
         },
         {
-            scripts: ['../render/player-ship', '../render/bullet', '../render/screen-text'],
+            scripts: ['../render/particle-system','../render/player-ship', '../render/bullet', '../render/screen-text'],
             message: 'All rendering systems loaded',
             onComplete: null
         },
@@ -340,7 +340,6 @@ MyGame.loader = (function() {
             console.log('All game assets loaded');
             console.log('Starting to dynamically load project scripts');
             loadScripts(scriptOrder, mainComplete);
-            console.log(MyGame.assets);
         }
     );
 

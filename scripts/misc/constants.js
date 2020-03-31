@@ -11,9 +11,9 @@ let MyConstants = Object.freeze({
     star: {
         AVG_SIZE: .004717,
         STDEV_SIZE: .00171,
-        AVG_LIFE: .4,
-        STDEV_LIFE: .25,
-        SPEED: .000256
+        AVG_LIFE: 1,
+        STDEV_LIFE: .5,
+        SPEED: .00002
     },
     playerShip: {
         WIDTH: .1,

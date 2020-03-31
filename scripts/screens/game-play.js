@@ -13,6 +13,10 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
 
     let lastTimeStamp,
         cancelNextRequest,
+        internalUpdate,
+        internalRender,
+        countdown,
+        level,
         playerShip;
 
 
@@ -20,7 +24,11 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         graphics.canvas.width = document.getElementById('game').clientWidth;
         graphics.canvas.height = document.getElementById('game').clientHeight;
         lastTimeStamp = performance.now();
+        internalUpdate = updateCountdown;
+        internalRender = renderCountdown;
         cancelNextRequest = false;
+        countdown = 4000;
+        level = 1;
         playerShip = objects.PlayerShip({
             image: images['playerShip'],
             center: { x: graphics.canvas.width/2, y: graphics.canvas.height - graphics.canvas.height/7 },
@@ -57,6 +65,23 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         myKeyboard.register(controls['Shoot'], playerShip.shoot);
     }
 
+
+
+    /********************************************* Update Functions **************************************************
+                                        Functions to update state of all things
+    ******************************************************************************************************************/
+    function updateCountdown(elapsedTime) {
+        countdown -= elapsedTime;
+        particleSystem.stars(elapsedTime);
+        //
+        // Once the countdown timer is down, switch to the playing state
+        if (countdown <= 0) {
+            shipControlsOn();
+            internalUpdate = updatePlaying;
+            internalRender = renderPlaying;
+        }
+    }
+
     function updateBullets(elapsedTime) {
         let keepMe = [];
         for (let i = 0; i < playerShip.shots.length; i++) {
@@ -73,6 +98,36 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         }
     }
 
+    function updatePlaying(elapsedTime) {
+        particleSystem.stars(elapsedTime);
+        updateBullets(elapsedTime);
+    }
+
+
+
+    /********************************************* Render Functions **************************************************
+                                            Functions to render all things
+     ******************************************************************************************************************/
+    function renderCountdown() {
+        renderPlaying();
+
+        if (countdown > 3000) {
+            renderer.ScreenText.renderNextLevel(level);
+        }
+        else {
+            renderer.ScreenText.renderCountdown(countdown);
+        }
+    }
+
+    function renderPlaying() {
+        graphics.clear();
+        renderer.ParticleSystem.render(particleSystem.particles);
+        renderer.PlayerShip.render(playerShip);
+        for (let i = 0; i < playerShip.shots.length; i++) {
+            renderer.Bullet.render(playerShip.shots[i]);
+        }
+    }
+
 
 
     function processInput(elapsedTime) {
@@ -80,17 +135,11 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     }
 
     function update(elapsedTime) {
-        particleSystem.backgroundParticles(elapsedTime);
-        updateBullets(elapsedTime);
+        internalUpdate(elapsedTime);
     }
 
     function render() {
-        graphics.clear();
-        particleSystem.render();
-        renderer.PlayerShip.render(playerShip);
-        for (let i = 0; i < playerShip.shots.length; i++) {
-            renderer.Bullet.render(playerShip.shots[i]);
-        }
+        internalRender();
     }
 
     function gameLoop(time) {
@@ -112,7 +161,6 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
 
     function run() {
         resetValues();
-        shipControlsOn();
         soundSystem.playMusic(MyConstants.soundSettings.inGameMusic.VOLUME);
         requestAnimationFrame(gameLoop);
     }
