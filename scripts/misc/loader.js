@@ -43,7 +43,7 @@ MyGame.loader = (function() {
             onComplete: null
         },
         {
-            scripts: ['../render/particle-system','../render/player-ship', '../render/bullet', '../render/screen-text'],
+            scripts: ['../render/particle-system','../render/ships', '../render/bullets', '../render/screen-text'],
             message: 'All rendering systems loaded',
             onComplete: null
         },
@@ -53,7 +53,7 @@ MyGame.loader = (function() {
             onComplete: null
         },
         {
-            scripts: ['../objects/player-ship'],
+            scripts: ['../objects/player-ship', '../objects/enemy-ship'],
             message: 'Ship objects loaded',
             onComplete: null
         },

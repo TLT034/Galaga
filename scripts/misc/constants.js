@@ -25,6 +25,18 @@ let MyConstants = Object.freeze({
         HEIGHT: .01712,
         SPEED: .000856,
     },
+    enemyGrid: {
+        CELL_SIZE: .067,
+        COLUMNS: 10,
+        ROWS: 6,
+        START_X: .2,
+        START_Y: .075,
+    },
+    enemy: {
+        SIZE: .05,
+        SWAY_SPEED: .00007,
+        SWAY_SWITCH_TIME: 2
+    },
 
 
 

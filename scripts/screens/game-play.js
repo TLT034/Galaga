@@ -17,7 +17,9 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         internalRender,
         countdown,
         level,
-        playerShip;
+        playerShip,
+        enemies = [],
+        enemySwaySwitchTimer;
 
 
     function resetValues() {
@@ -42,7 +44,32 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
             shootSound: soundSystem.playerShoot,
             shootFrequency: 300,
             prevShotTime: 0
-        })
+        });
+        for (let i = 0; i < 6; i++) {
+            for (let j = 0; j < 10; j++) {
+                enemies.push(objects.EnemyShip({
+                    image: images['butterfly'],
+                    center: coordinate(j,i),
+                    rotation: 0,
+                    size: {
+                        width: graphics.canvas.width * MyConstants.enemy.SIZE,
+                        height: graphics.canvas.height * MyConstants.enemy.SIZE
+                    },
+                    speed: graphics.canvas.width * MyConstants.enemy.SWAY_SPEED
+                }));
+            }
+        }
+        enemySwaySwitchTimer = graphics.canvas.width * MyConstants.enemy.SWAY_SWITCH_TIME/2;
+    }
+
+    function coordinate(x, y) {
+        let w = graphics.canvas.width;
+        let h = graphics.canvas.height;
+
+        return {
+            x: (w * MyConstants.enemyGrid.START_X) + (w * MyConstants.enemyGrid.CELL_SIZE * x),
+            y: (h * MyConstants.enemyGrid.START_Y) + (h * MyConstants.enemyGrid.CELL_SIZE * y)
+        };
     }
 
     function shipControlsOff(){
@@ -98,9 +125,33 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         }
     }
 
+    function updateEnemies(elapsedTime) {
+        enemySwaySwitchTimer -= elapsedTime;
+        if (enemySwaySwitchTimer <= 0) {
+            enemySwaySwitchTimer = graphics.canvas.width * MyConstants.enemy.SWAY_SWITCH_TIME;
+            let direction = 'left';
+
+            if (enemies.length > 0) {
+                if (enemies[0].swayDirection === 'left') { direction = 'right';}
+                for (let i = 0; i < enemies.length; i++) {
+                    if (enemies[i].center)
+                        enemies[i].changeSwayDirection(direction);
+                        enemies[i].update(elapsedTime);
+                }
+            }
+        }
+        else {
+            for (let i = 0; i < enemies.length; i++) {
+                if (enemies[i].center)
+                    enemies[i].update(elapsedTime);
+            }
+        }
+    }
+
     function updatePlaying(elapsedTime) {
         particleSystem.stars(elapsedTime);
         updateBullets(elapsedTime);
+        updateEnemies(elapsedTime);
     }
 
 
@@ -122,10 +173,8 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     function renderPlaying() {
         graphics.clear();
         renderer.ParticleSystem.render(particleSystem.particles);
-        renderer.PlayerShip.render(playerShip);
-        for (let i = 0; i < playerShip.shots.length; i++) {
-            renderer.Bullet.render(playerShip.shots[i]);
-        }
+        renderer.Ships.render(playerShip, enemies);
+        renderer.Bullets.render(playerShip.shots);
     }
 
 

@@ -1,8 +1,8 @@
 // --------------------------------------------------------------
 //
-// Renders a Bullet object.
+// Renders a Bullet objects.
 //
-// spec = {
+// bullet = {
 //    image: ,
 //    center: { x: , y: },
 //    size: { width: , height: }
@@ -10,11 +10,13 @@
 // }
 //
 // --------------------------------------------------------------
-MyGame.render.Bullet = (function(graphics) {
+MyGame.render.Bullets = (function(graphics) {
     'use strict';
 
-    function render(spec) {
-        graphics.drawTexture(spec.image, spec.center, spec.rotation, spec.size);
+    function render(bullets) {
+        for (let i = 0; i < bullets.length; i++) {
+            graphics.drawTexture(bullets[i].image, bullets[i].center, bullets[i].rotation, bullets[i].size);
+        }
     }
 
     return {
