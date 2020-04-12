@@ -16,10 +16,16 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         internalUpdate,
         internalRender,
         countdown,
-        level,
         playerShip,
         enemies = [],
-        enemySwaySwitchTimer;
+        enemySwaySwitchTimer,
+        enemyWaveTimer,
+        entryWaveNum,
+        currStage,
+        currWave,
+        enemyIdCount,
+        nextEnemyToEnter,
+        numEnemiesSoFar;
 
 
     function resetValues() {
@@ -30,10 +36,9 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         internalRender = renderCountdown;
         cancelNextRequest = false;
         countdown = 4000;
-        level = 1;
         playerShip = objects.PlayerShip({
             image: images['playerShip'],
-            center: { x: graphics.canvas.width/2, y: graphics.canvas.height - graphics.canvas.height/7 },
+            center: { x: graphics.canvas.width/2, y: graphics.canvas.height * .9 },
             rotation: 0,
             size: {
                 width: graphics.canvas.width * MyConstants.playerShip.WIDTH,
@@ -45,21 +50,15 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
             shootFrequency: 300,
             prevShotTime: 0
         });
-        for (let i = 0; i < 6; i++) {
-            for (let j = 0; j < 10; j++) {
-                enemies.push(objects.EnemyShip({
-                    image: images['butterfly'],
-                    center: coordinate(j,i),
-                    rotation: 0,
-                    size: {
-                        width: graphics.canvas.width * MyConstants.enemy.SIZE,
-                        height: graphics.canvas.height * MyConstants.enemy.SIZE
-                    },
-                    speed: graphics.canvas.width * MyConstants.enemy.SWAY_SPEED
-                }));
-            }
-        }
+
         enemySwaySwitchTimer = graphics.canvas.width * MyConstants.enemy.SWAY_SWITCH_TIME/2;
+        enemyWaveTimer = 0;
+        entryWaveNum = 0;
+        currStage = 1;
+        currWave = 0;
+        enemyIdCount = 0;
+        nextEnemyToEnter = 0;
+        numEnemiesSoFar = 0;
     }
 
     function coordinate(x, y) {
@@ -67,18 +66,18 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         let h = graphics.canvas.height;
 
         return {
-            x: (w * MyConstants.enemyGrid.START_X) + (w * MyConstants.enemyGrid.CELL_SIZE * x),
-            y: (h * MyConstants.enemyGrid.START_Y) + (h * MyConstants.enemyGrid.CELL_SIZE * y)
+            x: Math.round((w * MyConstants.enemyGrid.START_X) + (w * MyConstants.enemyGrid.CELL_SIZE * x)),
+            y: Math.round((h * MyConstants.enemyGrid.START_Y) + (h * MyConstants.enemyGrid.CELL_SIZE * y))
         };
     }
 
-    function shipControlsOff(){
+    function shipControlsOff() {
         myKeyboard.deregister(controls['Move Left']);
         myKeyboard.deregister(controls['Move Right']);
         myKeyboard.deregister(controls['Shoot']);
     }
 
-    function shipControlsOn(){
+    function shipControlsOn() {
         myKeyboard.register(controls['Move Left'], function(elapsedTime) {
             if (playerShip.center.x - playerShip.size.width/2 > graphics.canvas.width - graphics.canvas.width * .95) {
                 playerShip.moveLeft(elapsedTime);
@@ -92,6 +91,66 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         myKeyboard.register(controls['Shoot'], playerShip.shoot);
     }
 
+    function initializeEnemies() {
+        for (let i = 0; i < MyConstants.stages[currStage].enemyWaves.length; i++) {
+            let waveSpec = MyConstants.stages[currStage].enemyWaves[i];
+            let path = MyConstants.entryPaths[waveSpec.ENTRY_SIDE];
+
+            let startPositions = [];
+            let entryPath = [];
+            let distBetweenEnemies = graphics.canvas.width * MyConstants.enemy.ENTRY_GAP;
+            //
+            // initialize enemy start positions based on which side the enemies are entering from
+            switch (waveSpec.ENTRY_SIDE) {
+                case 'LEFT':
+                    for (let i = 0; i < waveSpec.AMOUNT; i++) {
+                        startPositions.push({
+                            x: i * -distBetweenEnemies - 50,
+                            y: graphics.canvas.height + i * distBetweenEnemies + 50
+                        });
+                    }
+                    break;
+                case 'RIGHT':
+                    for (let i = 0; i < waveSpec.AMOUNT; i++) {
+                        startPositions.push({
+                            x: graphics.canvas.width + i * distBetweenEnemies + 50,
+                            y: graphics.canvas.height + i * distBetweenEnemies + 50
+                        });
+                    }
+                    break;
+            }
+            //
+            // create entry path with path constants relative to canvas size
+            for (let i = 0; i < path.length; i++) {
+                entryPath.push({
+                    x: graphics.canvas.width * path[i].x,
+                    y: graphics.canvas.width * path[i].y
+                });
+            }
+            //
+            // create enemy objects
+            for (let i = 0; i < waveSpec.AMOUNT; i++) {
+                enemies.push(objects.EnemyShip({
+                    id: enemyIdCount,
+                    image: images[waveSpec.TYPE],
+                    center: startPositions[i],
+                    rotation: 0,
+                    size: {
+                        width: graphics.canvas.width * MyConstants.enemy.SIZE,
+                        height: graphics.canvas.height * MyConstants.enemy.SIZE
+                    },
+                    swaySpeed: graphics.canvas.width * MyConstants.enemy.SWAY_SPEED,
+                    speed: graphics.canvas.width * MyConstants.enemy.SPEED,
+                    gridPosition: coordinate(waveSpec.COORDS[i].x, waveSpec.COORDS[i].y),
+                    mode: 'standby',
+                    entryPath: JSON.parse(JSON.stringify(entryPath))  // This creates a deep copy
+                }));
+                enemyIdCount++;
+            }
+        }
+    }
+
+
 
 
     /********************************************* Update Functions **************************************************
@@ -104,7 +163,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         // Once the countdown timer is down, switch to the playing state
         if (countdown <= 0) {
             shipControlsOn();
-            internalUpdate = updatePlaying;
+            internalUpdate = updateEnemyEntry;
             internalRender = renderPlaying;
         }
     }
@@ -125,6 +184,27 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         }
     }
 
+    function updateEnemyEntry(elapsedTime) {
+        enemyWaveTimer -= elapsedTime;
+        updatePlaying(elapsedTime);
+        if (enemyWaveTimer <= 0) {
+            let numEnemiesThisWave = MyConstants.stages[currStage].enemyWaves[currWave].AMOUNT;
+            for (;nextEnemyToEnter < numEnemiesSoFar + numEnemiesThisWave; nextEnemyToEnter++) {
+                enemies[nextEnemyToEnter].mode = 'entry';
+            }
+            numEnemiesSoFar += numEnemiesThisWave;
+            //
+            // if there are more waves to add, reset countdown otherwise change internal update
+            if (currWave < MyConstants.stages[currStage].enemyWaves.length-1) {
+                currWave++;
+                enemyWaveTimer += MyConstants.stages[currStage].WAVE_FREQUENCY;
+            }
+            else {
+                internalUpdate = updatePlaying;
+            }
+        }
+    }
+
     function updateEnemies(elapsedTime) {
         enemySwaySwitchTimer -= elapsedTime;
         if (enemySwaySwitchTimer <= 0) {
@@ -134,17 +214,12 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
             if (enemies.length > 0) {
                 if (enemies[0].swayDirection === 'left') { direction = 'right';}
                 for (let i = 0; i < enemies.length; i++) {
-                    if (enemies[i].center)
-                        enemies[i].changeSwayDirection(direction);
-                        enemies[i].update(elapsedTime);
+                    enemies[i].swayDirection = direction;
                 }
             }
         }
-        else {
-            for (let i = 0; i < enemies.length; i++) {
-                if (enemies[i].center)
-                    enemies[i].update(elapsedTime);
-            }
+        for (let i = 0; i < enemies.length; i++) {
+            enemies[i].update(elapsedTime);
         }
     }
 
@@ -156,6 +231,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
 
 
 
+
     /********************************************* Render Functions **************************************************
                                             Functions to render all things
      ******************************************************************************************************************/
@@ -163,7 +239,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         renderPlaying();
 
         if (countdown > 3000) {
-            renderer.ScreenText.renderNextLevel(level);
+            renderer.ScreenText.renderNextLevel(currStage);
         }
         else {
             renderer.ScreenText.renderCountdown(countdown);
@@ -179,6 +255,10 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
 
 
 
+
+    /********************************************* GameDev Functions **************************************************
+                                  Default game model functions for game development
+     ******************************************************************************************************************/
     function processInput(elapsedTime) {
         myKeyboard.update(elapsedTime);
     }
@@ -210,6 +290,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
 
     function run() {
         resetValues();
+        initializeEnemies();
         soundSystem.playMusic(MyConstants.soundSettings.inGameMusic.VOLUME);
         requestAnimationFrame(gameLoop);
     }

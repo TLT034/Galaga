@@ -99,7 +99,7 @@ MyGame.render.ScreenText = (function(graphics) {
         let spec = {
             font: '128px Orbitron',
             fill: '#f5eaea',
-            text: "Stage 2"
+            text: `Stage ${level}`
         };
         let textWidth = graphics.measureTextWidth(spec);
         let textHeight = graphics.measureTextHeight(spec);
