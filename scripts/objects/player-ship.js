@@ -30,7 +30,6 @@ MyGame.objects.PlayerShip = function(spec) {
         let timeStamp = performance.now();
         if (timeStamp - spec.prevShotTime >= spec.shootFrequency) {
             spec.prevShotTime = timeStamp;
-
             spec.shootSound();
             spec.shots.push(MyGame.objects.Bullet({
                 image: MyGame.assets.images['playerBullet'],
@@ -41,12 +40,9 @@ MyGame.objects.PlayerShip = function(spec) {
                 },
                 speed: MyGame.graphics.canvas.width * MyConstants.playerBullet.SPEED,
                 rotation: 0,
+                hitEnemy: false,
             }));
         }
-    }
-
-    function updateShots(shots) {
-        spec.shots = shots;
     }
 
 
@@ -55,9 +51,9 @@ MyGame.objects.PlayerShip = function(spec) {
         moveLeft: moveLeft,
         moveRight: moveRight,
         shoot: shoot,
-        updateShots: updateShots,
 
         get shots() { return spec.shots; },
+        set shots(s) { spec.shots = s; },
         get image() { return spec.image; },
         get center() { return spec.center; },
         get size() { return spec.size; },

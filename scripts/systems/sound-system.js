@@ -14,6 +14,11 @@ MyGame.systems.SoundSystem = function(sounds) {
     sounds['playerShoot'].volume = MyConstants.soundSettings.playerShoot.VOLUME;
     sounds['playerShoot'].loop = MyConstants.soundSettings.playerShoot.LOOP;
     sounds['music'].loop = MyConstants.soundSettings.menuMusic.LOOP;
+    sounds['enemyKill'].volume = MyConstants.soundSettings.enemyKill.VOLUME;
+    sounds['enemyKill'].loop = MyConstants.soundSettings.enemyKill.LOOP;
+    sounds['themeSong'].volume = MyConstants.soundSettings.themeSong.VOLUME;
+    sounds['themeSong'].loop = MyConstants.soundSettings.themeSong.LOOP;
+
 
 
     that.playMusic = function (volume) {
@@ -29,9 +34,10 @@ MyGame.systems.SoundSystem = function(sounds) {
         }
     };
 
-
     that.buttonHover = function () {
         if (MyGame.soundEnabled) {
+            sounds['buttonHover'].pause();
+            sounds['buttonHover'].currentTime = 0;
             sounds['buttonHover'].play();
         }
     };
@@ -44,7 +50,29 @@ MyGame.systems.SoundSystem = function(sounds) {
 
     that.playerShoot = function () {
         if (MyGame.soundEnabled) {
+            sounds['playerShoot'].pause();
+            sounds['playerShoot'].currentTime = 0;
             sounds['playerShoot'].play();
+        }
+    };
+
+    that.enemyKill = function () {
+        if (MyGame.soundEnabled) {
+            sounds['enemyKill'].pause();
+            sounds['enemyKill'].currentTime = 0;
+            sounds['enemyKill'].play();
+        }
+    };
+
+    that.themeSong = function () {
+        if (MyGame.soundEnabled) {
+            sounds['themeSong'].play();
+        }
+    };
+
+    that.playerDie = function () {
+        if (MyGame.soundEnabled) {
+            sounds['explosion'].play();
         }
     };
 

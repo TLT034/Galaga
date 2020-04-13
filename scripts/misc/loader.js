@@ -192,13 +192,33 @@ MyGame.loader = (function() {
         },
         {
             type: 'sound',
-            key: 'success',
-            source: '/assets/sounds/success.mp3'
+            key: 'bonusSuccess',
+            source: '/assets/sounds/bonus-success.mp3'
         },
         {
             type: 'sound',
             key: 'explosion',
             source: '/assets/sounds/explosion.mp3'
+        },
+        {
+            type: 'sound',
+            key: 'enemyFlying',
+            source: '/assets/sounds/enemy-flying.mp3'
+        },
+        {
+            type: 'sound',
+            key: 'enemyKill',
+            source: '/assets/sounds/enemy-kill.mp3'
+        },
+        {
+            type: 'sound',
+            key: 'newLevel',
+            source: '/assets/sounds/new-level.mp3'
+        },
+        {
+            type: 'sound',
+            key: 'themeSong',
+            source: '/assets/sounds/theme-song.mp3'
         },
     ];
 

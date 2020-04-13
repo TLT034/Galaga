@@ -10,12 +10,12 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     let myKeyboard = input.Keyboard();
     let soundSystem = systems.SoundSystem;
     let particleSystem = systems.ParticleSystem;
+    let countdown = 7000;
 
     let lastTimeStamp,
         cancelNextRequest,
         internalUpdate,
         internalRender,
-        countdown,
         playerShip,
         enemies = [],
         enemySwaySwitchTimer,
@@ -25,7 +25,10 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         currWave,
         enemyIdCount,
         nextEnemyToEnter,
-        numEnemiesSoFar;
+        numEnemiesSoFar,
+        enemiesReadyToAttack,
+        totalShots,
+        totalEnemiesHit;
 
 
     function resetValues() {
@@ -35,7 +38,6 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         internalUpdate = updateCountdown;
         internalRender = renderCountdown;
         cancelNextRequest = false;
-        countdown = 4000;
         playerShip = objects.PlayerShip({
             image: images['playerShip'],
             center: { x: graphics.canvas.width/2, y: graphics.canvas.height * .9 },
@@ -59,6 +61,9 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         enemyIdCount = 0;
         nextEnemyToEnter = 0;
         numEnemiesSoFar = 0;
+        enemiesReadyToAttack = true;
+        totalShots = 0;
+        totalEnemiesHit = 0;
     }
 
     function coordinate(x, y) {
@@ -88,16 +93,16 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                 playerShip.moveRight(elapsedTime);
             }
         });
-        myKeyboard.register(controls['Shoot'], playerShip.shoot);
+        myKeyboard.register(controls['Shoot'], function(elapsedTime) {
+            playerShip.shoot(elapsedTime);
+            totalShots++;
+        });
     }
 
     function initializeEnemies() {
         for (let i = 0; i < MyConstants.stages[currStage].enemyWaves.length; i++) {
             let waveSpec = MyConstants.stages[currStage].enemyWaves[i];
-            let path = MyConstants.entryPaths[waveSpec.ENTRY_SIDE];
-
             let startPositions = [];
-            let entryPath = [];
             let distBetweenEnemies = graphics.canvas.width * MyConstants.enemy.ENTRY_GAP;
             //
             // initialize enemy start positions based on which side the enemies are entering from
@@ -120,18 +125,31 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                     break;
             }
             //
-            // create entry path with path constants relative to canvas size
-            for (let i = 0; i < path.length; i++) {
+            // create entry path and attack path with constant points relative to canvas size
+            let entryPathConstants = MyConstants.entryPaths[waveSpec.ENTRY_SIDE];
+            let entryPath = [];
+
+            for (let i = 0; i < entryPathConstants.length; i++) {
                 entryPath.push({
-                    x: graphics.canvas.width * path[i].x,
-                    y: graphics.canvas.width * path[i].y
+                    x: (graphics.canvas.width * entryPathConstants[i].x),
+                    y: (graphics.canvas.width * entryPathConstants[i].y)
                 });
             }
             //
             // create enemy objects
             for (let i = 0; i < waveSpec.AMOUNT; i++) {
+                let attackPathConstants = MyConstants.attackPaths[Random.nextRange(0,6)];
+                let attackPath = [];
+                for (let i = 0; i < attackPathConstants.length; i++) {
+                    attackPath.push({
+                        x: (graphics.canvas.width * attackPathConstants[i].x),
+                        y: (graphics.canvas.width * attackPathConstants[i].y)
+                    })
+                }
+
                 enemies.push(objects.EnemyShip({
                     id: enemyIdCount,
+                    type: waveSpec.TYPE,
                     image: images[waveSpec.TYPE],
                     center: startPositions[i],
                     rotation: 0,
@@ -140,14 +158,57 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                         height: graphics.canvas.height * MyConstants.enemy.SIZE
                     },
                     swaySpeed: graphics.canvas.width * MyConstants.enemy.SWAY_SPEED,
-                    speed: graphics.canvas.width * MyConstants.enemy.SPEED,
+                    entrySpeed: graphics.canvas.width * MyConstants.enemy.ENTRY_SPEED,
+                    attackSpeed: graphics.canvas.width * MyConstants.stages[currStage].ATTACK_SPEED,
                     gridPosition: coordinate(waveSpec.COORDS[i].x, waveSpec.COORDS[i].y),
                     mode: 'standby',
-                    entryPath: JSON.parse(JSON.stringify(entryPath))  // This creates a deep copy
+                    entryPath: JSON.parse(JSON.stringify(entryPath)),   // This creates a deep copy
+                    attackPath: JSON.parse(JSON.stringify(attackPath)), // This creates a deep copy
+                    reentryPoint: {
+                        x: graphics.canvas.width * MyConstants.enemy.RE_ENTRY_POINT.x,
+                        y: graphics.canvas.width * MyConstants.enemy.RE_ENTRY_POINT.y
+                    },
                 }));
                 enemyIdCount++;
             }
         }
+    }
+
+    function checkCollision(rect1, rect2) {
+        let rectOneEdges = {
+            right: rect1.center.x + rect1.size.width/2,
+            left: rect1.center.x - rect1.size.width/2,
+            top: rect1.center.y - rect1.size.height/2,
+            bottom: rect1.center.y + rect1.size.height/2
+        };
+        let rectTwoEdges = {
+            right: rect2.center.x + rect2.size.width/2,
+            left: rect2.center.x - rect2.size.width/2,
+            top: rect2.center.y - rect2.size.height/2,
+            bottom: rect2.center.y + rect2.size.height/2
+        };
+        return rectOneEdges.right >= rectTwoEdges.left &&
+            rectOneEdges.left <= rectTwoEdges.right &&
+            rectOneEdges.bottom >= rectTwoEdges.top &&
+            rectOneEdges.top <= rectTwoEdges.bottom
+    }
+
+    function checkIfShot(ship, bullets) {
+        for (let i = 0; i < bullets.length; i++) {
+            if (checkCollision(ship, bullets[i])) {
+                return i+1;
+            }
+        }
+        return false;
+    }
+
+    function checkForCrash(playerShip, enemyShips) {
+        for (let i = 0; i < enemyShips.length; i++) {
+            if (checkCollision(playerShip, enemyShips[i])) {
+                return i+1;
+            }
+        }
+        return false;
     }
 
 
@@ -159,6 +220,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     function updateCountdown(elapsedTime) {
         countdown -= elapsedTime;
         particleSystem.stars(elapsedTime);
+        particleSystem.updateParticleLifetime(elapsedTime);
         //
         // Once the countdown timer is down, switch to the playing state
         if (countdown <= 0) {
@@ -171,16 +233,17 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     function updateBullets(elapsedTime) {
         let keepMe = [];
         for (let i = 0; i < playerShip.shots.length; i++) {
-            if (playerShip.shots[i].center.x > 0 && playerShip.shots[i].center.x < graphics.canvas.width
-                && playerShip.shots[i].center.y > 0 && playerShip.shots[i].center.y < graphics.canvas.height) {
+            if (playerShip.shots[i].center.x > 0 && playerShip.shots[i].center.x < graphics.canvas.width &&
+                playerShip.shots[i].center.y > 0 && playerShip.shots[i].center.y < graphics.canvas.height &&
+                !playerShip.shots[i].hitEnemy)
+            {
                 keepMe.push(playerShip.shots[i]);
             }
         }
-        playerShip.updateShots(keepMe);
+        playerShip.shots = keepMe;
 
         for (let i = 0; i < playerShip.shots.length; i++) {
-            if (playerShip.shots[i].center)
-                playerShip.shots[i].update(elapsedTime);
+            playerShip.shots[i].update(elapsedTime);
         }
     }
 
@@ -212,19 +275,76 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
             let direction = 'left';
 
             if (enemies.length > 0) {
-                if (enemies[0].swayDirection === 'left') { direction = 'right';}
+                if (enemies[0].swayDirection === 'left') {
+                    direction = 'right';
+                }
                 for (let i = 0; i < enemies.length; i++) {
                     enemies[i].swayDirection = direction;
                 }
             }
         }
+        enemiesReadyToAttack = true;
         for (let i = 0; i < enemies.length; i++) {
+            if (enemies[i].mode !== 'grid') {
+                enemiesReadyToAttack = false;
+            }
             enemies[i].update(elapsedTime);
+        }
+        if (enemies.length > 0) {
+            if (enemiesReadyToAttack) {
+                enemies[Random.nextRange(0, enemies.length-1)].mode = 'attack';
+                enemies[Random.nextRange(0, enemies.length-1)].mode = 'attack';
+            }
+        }
+    }
+
+    function updateCollisions() {
+        //
+        // check if enemy ship has been shot by player ship
+        for (let i = 0; i < enemies.length; i++) {
+            let bulletIdx = checkIfShot(enemies[i], playerShip.shots);
+            if (bulletIdx) {
+                soundSystem.enemyKill();
+                // console.log(`You Shot Enemy ${enemies[i].id}!`);
+                if (enemies[i].type === 'greenBoss') {
+                    enemies[i].type = 'purpleBoss';
+                    enemies[i].image = images['purpleBoss'];
+                }
+                else {
+                    numEnemiesSoFar--;
+                    nextEnemyToEnter--;
+                    particleSystem.enemyExplosion(enemies[i].center);
+                    enemies.splice(i, 1);
+                }
+                playerShip.shots[bulletIdx-1].hitEnemy = true;
+                totalEnemiesHit++;
+            }
+        }
+        //
+        // check if player ship has been shot by enemy ship
+        // for (let i = 0; i < enemies.length; i++) {
+        //     if (checkIfShot(playerShip, enemies[i].shots)) {
+        //         // explode playerShip, then end game
+        //         return
+        //     }
+        // }
+        //
+        // check if player ship has crashed into enemy ship
+        let enemyIdx = checkForCrash(playerShip, enemies);
+        if (enemyIdx) {
+            // explode enemyThatCrashed and playerShip, then end game
+            console.log(`Enemy ${enemies[enemyIdx-1].id} Crashed Into You!`);
+            soundSystem.playerDie();
+            particleSystem.playerExplosion(playerShip.center);
+            particleSystem.enemyExplosion(enemies[enemyIdx-1].center);
+            enemies.splice(enemyIdx-1, 1);
         }
     }
 
     function updatePlaying(elapsedTime) {
         particleSystem.stars(elapsedTime);
+        particleSystem.updateParticleLifetime(elapsedTime);
+        updateCollisions();
         updateBullets(elapsedTime);
         updateEnemies(elapsedTime);
     }
@@ -249,7 +369,8 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     function renderPlaying() {
         graphics.clear();
         renderer.ParticleSystem.render(particleSystem.particles);
-        renderer.Ships.render(playerShip, enemies);
+        renderer.Ships.renderPlayerShip(playerShip);
+        renderer.Ships.renderEnemyShips(enemies);
         renderer.Bullets.render(playerShip.shots);
     }
 
@@ -292,6 +413,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         resetValues();
         initializeEnemies();
         soundSystem.playMusic(MyConstants.soundSettings.inGameMusic.VOLUME);
+        soundSystem.themeSong();
         requestAnimationFrame(gameLoop);
     }
 

@@ -50,9 +50,12 @@ MyGame.objects.EnemyShip = function(spec) {
                 break;
             // phase 3: fly attack path with shooting
             case 'attack':
-                break;
-            // phase 4: return to grid position from top of screen
-            case 'return':
+                if (pathIdx < spec.attackPath.length) {
+                    moveToPosition(elapsedTime, spec.attackPath[pathIdx]);
+                }
+                else {
+                    moveToPosition(elapsedTime, spec.gridPosition);
+                }
                 break;
         }
     }
@@ -60,21 +63,33 @@ MyGame.objects.EnemyShip = function(spec) {
     function moveToPosition(elapsedTime, destination) {
         let adj = spec.center.y - destination.y;
         let opp = destination.x - spec.center.x;
-
         spec.rotation = Math.atan2(opp, adj);
-        let nextY = spec.speed * elapsedTime * Math.cos(spec.rotation);
-        let nextX = spec.speed * elapsedTime * Math.sin(spec.rotation);
 
-        // if the enemy center position is close to the destination, set the enemy position = to its destination
+        let enemySpeed = spec.entrySpeed;
+        if (spec.mode === 'attack') {enemySpeed = spec.attackSpeed}
+
+        let nextY = enemySpeed * elapsedTime * Math.cos(spec.rotation);
+        let nextX = enemySpeed * elapsedTime * Math.sin(spec.rotation);
+        //
+        // if the enemy center position is close to the destination, set the enemy position equal to its destination
         if (spec.center.x <= destination.x + spec.size.width/5 && spec.center.x >= destination.x - spec.size.width/5 &&
             spec.center.y <= destination.y + spec.size.width/5 && spec.center.y >= destination.y - spec.size.width/5)
         {
-            spec.center = destination;
+            spec.center.x = destination.x;
+            spec.center.y = destination.y;
             pathIdx++;
-
-            if (spec.center.x === spec.gridPosition.x && spec.center.y === spec.gridPosition.y) {
+            //
+            // if the enemy is attacking and it made it to its last point in path, return to grid from top of screen
+            if (spec.mode === 'attack' && pathIdx === spec.attackPath.length) {
+                spec.center.x = spec.reentryPoint.x;
+                spec.center.y = spec.reentryPoint.y;
+            }
+            //
+            // if the enemy made it to grid position switch to grid mode
+            else if (spec.center.x === spec.gridPosition.x && spec.center.y === spec.gridPosition.y) {
                 spec.mode = 'grid';
                 spec.rotation = 0;
+                pathIdx = 0;
             }
         }
         else {
@@ -87,8 +102,10 @@ MyGame.objects.EnemyShip = function(spec) {
 
     return {
         update: update,
-        moveToPosition: moveToPosition,
 
+        get id() { return spec.id; },
+        get type() { return spec.type; },
+        set type(t) { spec.type = t; },
         get mode() { return spec.mode; },
         set mode(m) { spec.mode = m; },
         get speed () { return spec.speed; },
@@ -97,6 +114,7 @@ MyGame.objects.EnemyShip = function(spec) {
         get gridPosition() { return spec.gridPosition; },
         get entryPath() { return spec.entryPath; },
         get image() { return spec.image; },
+        set image(i) { spec.image = i; },
         get rotation() { return spec.rotation; },
         get center() { return spec.center; },
         get size() { return spec.size; },

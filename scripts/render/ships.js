@@ -13,15 +13,18 @@
 MyGame.render.Ships = (function(graphics) {
     'use strict';
 
-    function render(playerShip, enemyShips) {
-        graphics.drawTexture(playerShip.image, playerShip.center, playerShip.rotation, playerShip.size);
+    function renderPlayerShip(ship) {
+        graphics.drawTexture(ship.image, ship.center, ship.rotation, ship.size);
+    }
 
-        for (let i = 0; i < enemyShips.length; i++) {
-            graphics.drawTexture(enemyShips[i].image, enemyShips[i].center, enemyShips[i].rotation, enemyShips[i].size);
+    function renderEnemyShips(ships) {
+        for (let i = 0; i < ships.length; i++) {
+            graphics.drawTexture(ships[i].image, ships[i].center, ships[i].rotation, ships[i].size);
         }
     }
 
     return {
-        render: render
+        renderPlayerShip: renderPlayerShip,
+        renderEnemyShips: renderEnemyShips
     };
 }(MyGame.graphics));
