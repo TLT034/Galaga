@@ -48,8 +48,8 @@ MyGame.loader = (function() {
             onComplete: null
         },
         {
-            scripts: ['../systems/particle-system', '../systems/sound-system'],
-            message: 'Particle and Sound systems loaded',
+            scripts: ['../systems/particle-system', '../systems/sound-system', '../systems/score-system'],
+            message: 'Particle, Sound and Score, systems loaded',
             onComplete: null
         },
         {

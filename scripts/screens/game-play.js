@@ -10,7 +10,10 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     let myKeyboard = input.Keyboard();
     let soundSystem = systems.SoundSystem;
     let particleSystem = systems.ParticleSystem;
+    let scoreSystem = systems.ScoreSystem;
     let countdown = 7000;
+    let totalShots = 0;
+    let totalEnemiesHit = 0;
 
     let lastTimeStamp,
         cancelNextRequest,
@@ -26,9 +29,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         enemyIdCount,
         nextEnemyToEnter,
         numEnemiesSoFar,
-        enemiesReadyToAttack,
-        totalShots,
-        totalEnemiesHit;
+        enemiesReadyToAttack;
 
 
     function resetValues() {
@@ -62,8 +63,6 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         nextEnemyToEnter = 0;
         numEnemiesSoFar = 0;
         enemiesReadyToAttack = true;
-        totalShots = 0;
-        totalEnemiesHit = 0;
     }
 
     function coordinate(x, y) {
@@ -214,6 +213,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
 
 
 
+
     /********************************************* Update Functions **************************************************
                                         Functions to update state of all things
     ******************************************************************************************************************/
@@ -313,6 +313,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                 else {
                     numEnemiesSoFar--;
                     nextEnemyToEnter--;
+                    scoreSystem.enemyKilled(enemies[i]);
                     particleSystem.enemyExplosion(enemies[i].center);
                     enemies.splice(i, 1);
                 }
@@ -372,6 +373,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         renderer.Ships.renderPlayerShip(playerShip);
         renderer.Ships.renderEnemyShips(enemies);
         renderer.Bullets.render(playerShip.shots);
+        renderer.ScreenText.renderScore(scoreSystem.score);
     }
 
 
@@ -406,7 +408,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     }
 
     function initialize() {
-
+        scoreSystem.initialize();
     }
 
     function run() {

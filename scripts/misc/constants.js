@@ -51,7 +51,13 @@ let MyConstants = Object.freeze({
         TYPES: [
             'greenBoss',
             'butterfly',
-            'bee'
+            'bee',
+            'transform1',
+            'transform2',
+            'transform3',
+            'bonus1',
+            'bonus2',
+            'bonus3',
         ],
         SIZE: .05,
         SWAY_SPEED: .00007,
@@ -233,6 +239,29 @@ let MyConstants = Object.freeze({
         3: {
 
         }
+    },
+
+    //
+    // scoring
+    killValues: {
+        BEE_STATIONARY: 50,
+        BEE_ATTACKING: 100,
+        BUTTERFLY_STATIONARY: 80,
+        BUTTERFLY_ATTACKING: 160,
+        BOSS_STATIONARY: 150,
+        BOSS_ATTACKING: 400,
+        CHALLENGING_STAGE_GROUP: 1000,
+        TRANSFORM: 160,
+        TRANSFORM_GROUP_1: 1000,
+        TRANSFORM_GROUP_2: 2000,
+        TRANSFORM_GROUP_3: 3000,
+    },
+
+    //
+    // Screen Text Sizes
+    textSizes: {
+        SMALL: .0425,
+        LARGE: .11,
     },
 
 

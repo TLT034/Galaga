@@ -5,35 +5,20 @@
 // --------------------------------------------------------------
 MyGame.render.ScreenText = (function(graphics) {
     'use strict';
-    // --------------------------------------------------------------
-    // spec = { fuel: , verticalSpeed: , angle: }
-    // --------------------------------------------------------------
-    function renderShipInfo(spec) {
-        let fuelText = `Fuel: ${spec.fuel.toFixed(1)}`;
-        let color = '#f5eaea';
-        if (spec.fuel <= 0) {
-            color = 'red';
-        }
-        graphics.drawText(fuelText, {x: 10, y: 40}, '30px Orbitron', color);
 
-        let speedText = `Vertical Speed: ${spec.verticalSpeed.toFixed(1)}`;
-        color = '#f5eaea';
-        if (spec.verticalSpeed >= 2) {
-            color = 'red';
-        }
-        graphics.drawText(speedText, {x: 10, y: 90}, '30px Orbitron', color);
-
-        let angleText = `Angle: ${spec.angle.toFixed(1)}`;
-        color = '#f5eaea';
-        if (spec.angle > 5 && spec.angle < 355) {
-            color = 'red';
-        }
-        graphics.drawText(angleText, {x: 10, y: 140}, '30px Orbitron', color);
+    function renderScore(score) {
+        let scoreText = `Score: ${score}`;
+        graphics.drawText(
+            scoreText,
+            {x: graphics.canvas.width * .01, y: graphics.canvas.height * .99},
+            `${Math.floor(graphics.canvas.width * MyConstants.textSizes.SMALL)}px Orbitron`,
+            '#f5eaea'
+        );
     }
 
     function renderCountdown(time) {
         let spec = {
-            font: '128px Orbitron',
+            font: `${Math.floor(graphics.canvas.width * MyConstants.textSizes.LARGE)}px Orbitron`,
             fill: '#f5eaea',
             text: Math.ceil(time / 1000).toString()
         };
@@ -45,7 +30,7 @@ MyGame.render.ScreenText = (function(graphics) {
 
     function renderGameOver(score) {
         let spec = {
-            font: '128px Orbitron',
+            font: `${Math.floor(graphics.canvas.width * MyConstants.textSizes.LARGE)}px Orbitron`,
             fill: '#f5eaea',
             text: "Game Over!"
         };
@@ -97,7 +82,7 @@ MyGame.render.ScreenText = (function(graphics) {
 
     function renderNextLevel(level) {
         let spec = {
-            font: '128px Orbitron',
+            font: `${Math.floor(graphics.canvas.width * MyConstants.textSizes.LARGE)}px Orbitron`,
             fill: '#f5eaea',
             text: `Stage ${level}`
         };
@@ -108,7 +93,7 @@ MyGame.render.ScreenText = (function(graphics) {
     }
 
     return {
-        renderShipInfo: renderShipInfo,
+        renderScore: renderScore,
         renderCountdown: renderCountdown,
         renderGameOver: renderGameOver,
         renderSafeLanding: renderSafeLanding,
