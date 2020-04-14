@@ -22,8 +22,8 @@ MyGame.objects.Bullet = function(spec) {
     return {
         update: update,
 
-        get hitEnemy() { return spec.hitEnemy; },
-        set hitEnemy(h) { spec.hitEnemy = h; },
+        get hitShip() { return spec.hitShip; },
+        set hitShip(h) { spec.hitShip = h; },
         get image() { return spec.image; },
         get center() { return spec.center; },
         get size() { return spec.size; },

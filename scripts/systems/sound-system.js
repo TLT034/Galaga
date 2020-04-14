@@ -16,8 +16,16 @@ MyGame.systems.SoundSystem = function(sounds) {
     sounds['music'].loop = MyConstants.soundSettings.menuMusic.LOOP;
     sounds['enemyKill'].volume = MyConstants.soundSettings.enemyKill.VOLUME;
     sounds['enemyKill'].loop = MyConstants.soundSettings.enemyKill.LOOP;
+    sounds['bossKill'].volume = MyConstants.soundSettings.bossKill.VOLUME;
+    sounds['bossKill'].loop = MyConstants.soundSettings.bossKill.LOOP;
+    sounds['enemyFlying'].volume = MyConstants.soundSettings.enemyFlying.VOLUME;
+    sounds['enemyFlying'].loop = MyConstants.soundSettings.enemyFlying.LOOP;
     sounds['themeSong'].volume = MyConstants.soundSettings.themeSong.VOLUME;
     sounds['themeSong'].loop = MyConstants.soundSettings.themeSong.LOOP;
+    sounds['newLevel'].volume = MyConstants.soundSettings.newLevel.VOLUME;
+    sounds['newLevel'].loop = MyConstants.soundSettings.newLevel.LOOP;
+    sounds['bonusSuccess'].volume = MyConstants.soundSettings.bonusSuccess.VOLUME;
+    sounds['bonusSuccess'].loop = MyConstants.soundSettings.bonusSuccess.LOOP;
 
 
 
@@ -38,7 +46,9 @@ MyGame.systems.SoundSystem = function(sounds) {
         if (MyGame.soundEnabled) {
             sounds['buttonHover'].pause();
             sounds['buttonHover'].currentTime = 0;
-            sounds['buttonHover'].play();
+            sounds['buttonHover'].play().catch(e => {
+                // do nothing
+            });
         }
     };
 
@@ -52,7 +62,9 @@ MyGame.systems.SoundSystem = function(sounds) {
         if (MyGame.soundEnabled) {
             sounds['playerShoot'].pause();
             sounds['playerShoot'].currentTime = 0;
-            sounds['playerShoot'].play();
+            sounds['playerShoot'].play().catch(e => {
+                // do nothing
+            });
         }
     };
 
@@ -60,7 +72,29 @@ MyGame.systems.SoundSystem = function(sounds) {
         if (MyGame.soundEnabled) {
             sounds['enemyKill'].pause();
             sounds['enemyKill'].currentTime = 0;
-            sounds['enemyKill'].play();
+            sounds['enemyKill'].play().catch(e => {
+                // do nothing
+            });
+        }
+    };
+
+    that.bossKill = function () {
+        if (MyGame.soundEnabled) {
+            sounds['bossKill'].pause();
+            sounds['bossKill'].currentTime = 0;
+            sounds['bossKill'].play().catch(e => {
+                // do nothing
+            });
+        }
+    };
+
+    that.enemyFlying = function () {
+        if (MyGame.soundEnabled) {
+            sounds['enemyFlying'].pause();
+            sounds['enemyFlying'].currentTime = 0;
+            sounds['enemyFlying'].play().catch(e => {
+                // do nothing
+            });
         }
     };
 
@@ -70,9 +104,25 @@ MyGame.systems.SoundSystem = function(sounds) {
         }
     };
 
+    that.newLevel = function () {
+        if (MyGame.soundEnabled) {
+            sounds['newLevel'].play();
+        }
+    };
+
     that.playerDie = function () {
         if (MyGame.soundEnabled) {
             sounds['explosion'].play();
+        }
+    };
+
+    that.bonusSuccess = function () {
+        if (MyGame.soundEnabled) {
+            sounds['bonusSuccess'].pause();
+            sounds['bonusSuccess'].currentTime = 0;
+            sounds['bonusSuccess'].play().catch(e => {
+                // do nothing
+            });
         }
     };
 

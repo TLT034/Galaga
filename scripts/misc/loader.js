@@ -212,6 +212,11 @@ MyGame.loader = (function() {
         },
         {
             type: 'sound',
+            key: 'bossKill',
+            source: '/assets/sounds/boss-kill.mp3'
+        },
+        {
+            type: 'sound',
             key: 'newLevel',
             source: '/assets/sounds/new-level.mp3'
         },

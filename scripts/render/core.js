@@ -72,10 +72,11 @@ MyGame.graphics = (function() {
     //    linePath: [{ x:, y: }]
     //
     // --------------------------------------------------------------
-    function drawText(text, position, font, color = '#f5eaea') {
+    function drawText(text, position, font, color = '#f5eaea', alignment = 'left') {
         context.save();
         context.font = font;
         context.fillStyle = color;
+        context.textAlign = alignment;
 
         context.fillText(text, position.x, position.y);
         context.restore();

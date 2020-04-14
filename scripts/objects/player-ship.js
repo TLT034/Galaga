@@ -10,7 +10,8 @@
 //         shots: [bullet objects],
 //         shootSound: soundSystem sound effect,
 //         shootFrequency: ms
-//         prevShotTime: ms
+//         prevShotTime: ms,
+//         incrementShotCount: function
 // }
 //
 // --------------------------------------------------------------
@@ -29,6 +30,7 @@ MyGame.objects.PlayerShip = function(spec) {
     function shoot(elapsedTime) {
         let timeStamp = performance.now();
         if (timeStamp - spec.prevShotTime >= spec.shootFrequency) {
+            spec.incrementShotCount();
             spec.prevShotTime = timeStamp;
             spec.shootSound();
             spec.shots.push(MyGame.objects.Bullet({
@@ -40,7 +42,7 @@ MyGame.objects.PlayerShip = function(spec) {
                 },
                 speed: MyGame.graphics.canvas.width * MyConstants.playerBullet.SPEED,
                 rotation: 0,
-                hitEnemy: false,
+                hitShip: false,
             }));
         }
     }
@@ -52,6 +54,7 @@ MyGame.objects.PlayerShip = function(spec) {
         moveRight: moveRight,
         shoot: shoot,
 
+        set shootFrequency(f) { spec.shootFrequency = f; },
         get shots() { return spec.shots; },
         set shots(s) { spec.shots = s; },
         get image() { return spec.image; },

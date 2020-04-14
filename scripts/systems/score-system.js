@@ -7,39 +7,65 @@ MyGame.systems.ScoreSystem = function() {
     }
 
 
-    function enemyKilled(enemy) {
+    function enemyKilled(enemy, bonusPointsToRender) {
         switch (enemy.type) {
             case 'bee':
-                if (enemy.mode === 'attack' || enemy.mode === 'entry') {
-                    score += MyConstants.killValues.BEE_ATTACKING;
+                if (enemy.mode !== 'grid') {
+                    score += MyConstants.scoring.BEE_ATTACKING;
                 }
                 else {
-                    score += MyConstants.killValues.BEE_STATIONARY;
+                    score += MyConstants.scoring.BEE_STATIONARY;
                 }
                 break;
             case 'butterfly':
-                if (enemy.mode === 'attack' || enemy.mode === 'entry') {
-                    score += MyConstants.killValues.BUTTERFLY_ATTACKING;
+                if (enemy.mode !== 'grid') {
+                    score += MyConstants.scoring.BUTTERFLY_ATTACKING;
                 }
                 else {
-                    score += MyConstants.killValues.BUTTERFLY_STATIONARY;
+                    score += MyConstants.scoring.BUTTERFLY_STATIONARY;
                 }
                 break;
             case 'greenBoss':
             case 'purpleBoss':
-                if (enemy.mode === 'attack' || enemy.mode === 'entry') {
-                    score += MyConstants.killValues.BOSS_ATTACKING;
+                if (enemy.mode !== 'grid') {
+                    score += MyConstants.scoring.BOSS_ATTACKING;
+                    bonusPointsToRender.push({
+                        amount: MyConstants.scoring.BOSS_ATTACKING,
+                        position: {x: enemy.center.x, y: enemy.center.y},
+                        lifetime: 1000,
+                        timeAlive: 0,
+                        color: '#0091FF'
+                    });
                 }
                 else {
-                    score += MyConstants.killValues.BOSS_STATIONARY;
+                    score += MyConstants.scoring.BOSS_STATIONARY;
                 }
                 break;
             case 'transform1':
             case 'transform2':
             case 'transform3':
-                score += MyConstants.killValues.TRANSFORM;
+                score += MyConstants.scoring.TRANSFORM;
                 break;
+            case 'bonus1':
+            case 'bonus2':
+            case 'bonus3':
+                score += MyConstants.scoring.BONUS_SHIP;
         }
+    }
+
+    function challengeBonus(numEnemiesHit) {
+        score += numEnemiesHit * MyConstants.scoring.CHALLENGING_STAGE_HIT;
+    }
+
+    function waveCleared(enemyPosition, bonusPointsToRender) {
+        score += MyConstants.scoring.CHALLENGING_STAGE_GROUP;
+        bonusPointsToRender.push({
+            amount: MyConstants.scoring.CHALLENGING_STAGE_GROUP,
+            position: {x: enemyPosition.x, y: enemyPosition.y},
+            lifetime: 1500,
+            timeAlive: 0,
+            color: 'white'
+        });
     }
 
 
@@ -47,6 +73,8 @@ MyGame.systems.ScoreSystem = function() {
     return {
         initialize: initialize,
         enemyKilled: enemyKilled,
+        challengeBonus: challengeBonus,
+        waveCleared: waveCleared,
 
         get score() {return score},
 

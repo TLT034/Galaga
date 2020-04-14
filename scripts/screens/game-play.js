@@ -11,34 +11,69 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     let soundSystem = systems.SoundSystem;
     let particleSystem = systems.ParticleSystem;
     let scoreSystem = systems.ScoreSystem;
-    let countdown = 7000;
-    let totalShots = 0;
-    let totalEnemiesHit = 0;
 
-    let lastTimeStamp,
-        cancelNextRequest,
+    // values that are only reset when a new game is played
+    let countdown,
+        gameOverTimer,
+        gameSummaryTimer,
         internalUpdate,
         internalRender,
+        totalShots,
+        totalEnemiesHit,
+        currStage,
+        lastKilledEnemyPosition,
+        enemies;
+
+
+    // values that are reset when resetValues is called (i.e. every stage)
+    let lastTimeStamp,
+        cancelNextRequest,
         playerShip,
-        enemies = [],
         enemySwaySwitchTimer,
         enemyWaveTimer,
         entryWaveNum,
-        currStage,
         currWave,
         enemyIdCount,
         nextEnemyToEnter,
         numEnemiesSoFar,
-        enemiesReadyToAttack;
+        enemiesReadyToAttack,
+        levelTransitionTimer,
+        enemiesHitThisStage,
+        enemiesKilledThisWave,
+        challengeStatsDisplayTimer,
+        bonusPointsToRender,
+        enemyBullets;
 
+
+    function newGame() {
+        scoreSystem.initialize();
+        soundSystem.playMusic(MyConstants.soundSettings.inGameMusic.VOLUME);
+        soundSystem.themeSong();
+        myKeyboard.deregister('Escape');
+
+        countdown = 7000;
+        gameOverTimer = 3000;
+        gameSummaryTimer = 14000;
+        internalUpdate = updateCountdown;
+        internalRender = renderCountdown;
+        totalShots = 0;
+        totalEnemiesHit = 0;
+        currStage = 0;
+        lastKilledEnemyPosition = null;
+        enemies = [];
+
+        resetValues();
+    }
 
     function resetValues() {
         graphics.canvas.width = document.getElementById('game').clientWidth;
         graphics.canvas.height = document.getElementById('game').clientHeight;
         lastTimeStamp = performance.now();
-        internalUpdate = updateCountdown;
-        internalRender = renderCountdown;
         cancelNextRequest = false;
+        countdown = 7000;
+        gameOverTimer = 3000;
+        gameSummaryTimer = 14000;
+
         playerShip = objects.PlayerShip({
             image: images['playerShip'],
             center: { x: graphics.canvas.width/2, y: graphics.canvas.height * .9 },
@@ -50,19 +85,27 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
             speed: graphics.canvas.width * MyConstants.playerShip.SPEED,
             shots: [],
             shootSound: soundSystem.playerShoot,
-            shootFrequency: 300,
-            prevShotTime: 0
+            shootFrequency: MyConstants.playerShip.NORMAL_FIRE_RATE,
+            prevShotTime: 0,
+            incrementShotCount: incrementTotalShots
         });
 
         enemySwaySwitchTimer = graphics.canvas.width * MyConstants.enemy.SWAY_SWITCH_TIME/2;
         enemyWaveTimer = 0;
         entryWaveNum = 0;
-        currStage = 1;
         currWave = 0;
         enemyIdCount = 0;
         nextEnemyToEnter = 0;
         numEnemiesSoFar = 0;
         enemiesReadyToAttack = true;
+        levelTransitionTimer = 3000;
+        enemiesHitThisStage = 0;
+        enemiesKilledThisWave = 0;
+        challengeStatsDisplayTimer = 7000;
+        bonusPointsToRender = [];
+        enemyBullets = [];
+
+        initializeEnemies();
     }
 
     function coordinate(x, y) {
@@ -92,10 +135,15 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                 playerShip.moveRight(elapsedTime);
             }
         });
-        myKeyboard.register(controls['Shoot'], function(elapsedTime) {
-            playerShip.shoot(elapsedTime);
-            totalShots++;
-        });
+        myKeyboard.register(controls['Shoot'], playerShip.shoot);
+    }
+
+    function incrementTotalShots() {
+        totalShots++;
+    }
+
+    function addEnemyBullet(bullet) {
+        enemyBullets.push(bullet);
     }
 
     function initializeEnemies() {
@@ -104,9 +152,11 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
             let startPositions = [];
             let distBetweenEnemies = graphics.canvas.width * MyConstants.enemy.ENTRY_GAP;
             //
-            // initialize enemy start positions based on which side the enemies are entering from
-            switch (waveSpec.ENTRY_SIDE) {
-                case 'LEFT':
+            // initialize enemy start positions based on where the enemies are entering from
+            switch (waveSpec.ENTRY_PATH) {
+                // bottom left
+                case 0:
+                case 4:
                     for (let i = 0; i < waveSpec.AMOUNT; i++) {
                         startPositions.push({
                             x: i * -distBetweenEnemies - 50,
@@ -114,7 +164,9 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                         });
                     }
                     break;
-                case 'RIGHT':
+                // bottom right
+                case 1:
+                case 5:
                     for (let i = 0; i < waveSpec.AMOUNT; i++) {
                         startPositions.push({
                             x: graphics.canvas.width + i * distBetweenEnemies + 50,
@@ -122,10 +174,20 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                         });
                     }
                     break;
+                // top center
+                case 2:
+                case 3:
+                    for (let i = 0; i< waveSpec.AMOUNT; i++) {
+                        startPositions.push({
+                            x: graphics.canvas.width/2, startPositions,
+                            y: 0 - i * distBetweenEnemies - 100
+                        })
+                    }
+                    break;
             }
             //
             // create entry path and attack path with constant points relative to canvas size
-            let entryPathConstants = MyConstants.entryPaths[waveSpec.ENTRY_SIDE];
+            let entryPathConstants = MyConstants.ENTRY_PATHS[waveSpec.ENTRY_PATH];
             let entryPath = [];
 
             for (let i = 0; i < entryPathConstants.length; i++) {
@@ -134,18 +196,44 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                     y: (graphics.canvas.width * entryPathConstants[i].y)
                 });
             }
-            //
-            // create enemy objects
-            for (let i = 0; i < waveSpec.AMOUNT; i++) {
-                let attackPathConstants = MyConstants.attackPaths[Random.nextRange(0,6)];
-                let attackPath = [];
-                for (let i = 0; i < attackPathConstants.length; i++) {
-                    attackPath.push({
-                        x: (graphics.canvas.width * attackPathConstants[i].x),
-                        y: (graphics.canvas.width * attackPathConstants[i].y)
-                    })
-                }
 
+            for (let i = 0; i < waveSpec.AMOUNT; i++) {
+                let attackPathIdx = Random.nextRange(0,6);
+                let attackPathConstants = MyConstants.ATTACK_PATHS[attackPathIdx];
+                let attackPath = [];
+                let gridPos = {x: -1, y: -1};
+                let entryShootPos = {x: -1, y: -1};
+                let attackShootPos = {x: -1, y: -1};
+                //
+                // attack path, grid positions, and shooting are only for non-challenge stages
+                if (currStage !== 2) {
+                    for (let i = 0; i < attackPathConstants.length; i++) {
+                        attackPath.push({
+                            x: (graphics.canvas.width * attackPathConstants[i].x),
+                            y: (graphics.canvas.width * attackPathConstants[i].y)
+                        })
+                    }
+                    gridPos = coordinate(waveSpec.COORDS[i].x, waveSpec.COORDS[i].y);
+                    //
+                    // probability each enemy is a shooter during this stage
+                    let isAttackShooter = Math.random() <= MyConstants.stages[currStage].ATTACK_SHOOT_PROBABILITY;
+                    let isEntryShooter = Math.random() <= MyConstants.stages[currStage].ENTRY_SHOOT_PROBABILITY;
+
+                    if (isAttackShooter) {
+                        attackShootPos = {
+                            x: graphics.canvas.width * MyConstants.ATTACK_SHOOT_POSITIONS[attackPathIdx].x,
+                            y: graphics.canvas.width * MyConstants.ATTACK_SHOOT_POSITIONS[attackPathIdx].y
+                        }
+                    }
+                    if (isEntryShooter) {
+                        entryShootPos = {
+                            x: graphics.canvas.width * MyConstants.ENTRY_SHOOT_POSITIONS[waveSpec.ENTRY_PATH].x,
+                            y: graphics.canvas.width * MyConstants.ENTRY_SHOOT_POSITIONS[waveSpec.ENTRY_PATH].y
+                        }
+                    }
+                }
+                //
+                // create enemy objects
                 enemies.push(objects.EnemyShip({
                     id: enemyIdCount,
                     type: waveSpec.TYPE,
@@ -157,9 +245,9 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                         height: graphics.canvas.height * MyConstants.enemy.SIZE
                     },
                     swaySpeed: graphics.canvas.width * MyConstants.enemy.SWAY_SPEED,
-                    entrySpeed: graphics.canvas.width * MyConstants.enemy.ENTRY_SPEED,
+                    entrySpeed: graphics.canvas.width * waveSpec.SPEED,
                     attackSpeed: graphics.canvas.width * MyConstants.stages[currStage].ATTACK_SPEED,
-                    gridPosition: coordinate(waveSpec.COORDS[i].x, waveSpec.COORDS[i].y),
+                    gridPosition: gridPos,
                     mode: 'standby',
                     entryPath: JSON.parse(JSON.stringify(entryPath)),   // This creates a deep copy
                     attackPath: JSON.parse(JSON.stringify(attackPath)), // This creates a deep copy
@@ -167,6 +255,8 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                         x: graphics.canvas.width * MyConstants.enemy.RE_ENTRY_POINT.x,
                         y: graphics.canvas.width * MyConstants.enemy.RE_ENTRY_POINT.y
                     },
+                    addBullet: addEnemyBullet,
+                    shootPositions: [entryShootPos, attackShootPos]
                 }));
                 enemyIdCount++;
             }
@@ -222,7 +312,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         particleSystem.stars(elapsedTime);
         particleSystem.updateParticleLifetime(elapsedTime);
         //
-        // Once the countdown timer is down, switch to the playing state
+        // Once the countdown timer is done, switch to the playing state
         if (countdown <= 0) {
             shipControlsOn();
             internalUpdate = updateEnemyEntry;
@@ -230,12 +320,67 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         }
     }
 
+    function updateLevelTransition(elapsedTime) {
+        levelTransitionTimer -= elapsedTime;
+        particleSystem.stars(elapsedTime);
+        particleSystem.updateParticleLifetime(elapsedTime);
+        //
+        // Once the level transition timer is done, switch to the playing state
+        if (levelTransitionTimer <= 0) {
+            shipControlsOn();
+            internalUpdate = updateEnemyEntry;
+            internalRender = renderPlaying;
+        }
+    }
+
+    function updateChallengeStats(elapsedTime) {
+        challengeStatsDisplayTimer -= elapsedTime;
+        particleSystem.stars(elapsedTime);
+        particleSystem.updateParticleLifetime(elapsedTime);
+        //
+        // Once the challenge stats timer is done, switch to the level transition
+        if (challengeStatsDisplayTimer <= 0) {
+            resetValues();
+            soundSystem.newLevel();
+            internalUpdate = updateLevelTransition;
+            internalRender = renderLevelTransition;
+        }
+
+    }
+
+    function updateGameOver(elapsedTime) {
+        gameOverTimer -= elapsedTime;
+        updateEnemies(elapsedTime);
+        particleSystem.stars(elapsedTime);
+        particleSystem.updateParticleLifetime(elapsedTime);
+        //
+        // Once the game over  timer is done, switch to game over summary
+        if (gameOverTimer <= 0) {
+            myKeyboard.register('Escape', function () {
+                cancelNextRequest = true;
+                game.showScreen('main-menu');
+            });
+            internalUpdate = updateGameOverSummary;
+            internalRender = renderGameOverSummary;
+        }
+    }
+
+    function updateGameOverSummary(elapsedTime) {
+        gameSummaryTimer -= elapsedTime;
+        particleSystem.stars(elapsedTime);
+        particleSystem.updateParticleLifetime(elapsedTime);
+        //
+        // Do nothing but decrement, stay on this screen until user hits esc
+    }
+
+
+
     function updateBullets(elapsedTime) {
         let keepMe = [];
         for (let i = 0; i < playerShip.shots.length; i++) {
             if (playerShip.shots[i].center.x > 0 && playerShip.shots[i].center.x < graphics.canvas.width &&
                 playerShip.shots[i].center.y > 0 && playerShip.shots[i].center.y < graphics.canvas.height &&
-                !playerShip.shots[i].hitEnemy)
+                !playerShip.shots[i].hitShip)
             {
                 keepMe.push(playerShip.shots[i]);
             }
@@ -245,25 +390,84 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         for (let i = 0; i < playerShip.shots.length; i++) {
             playerShip.shots[i].update(elapsedTime);
         }
+
+        let keepMe2 = [];
+        for (let i = 0; i < enemyBullets.length; i++) {
+            if (enemyBullets[i].center.x > 0 && enemyBullets[i].center.x < graphics.canvas.width &&
+                enemyBullets[i].center.y > 0 && enemyBullets[i].center.y < graphics.canvas.height &&
+                !enemyBullets[i].hitShip)
+            {
+                keepMe2.push(enemyBullets[i]);
+            }
+        }
+        enemyBullets = keepMe2;
+
+        for (let i = 0; i < enemyBullets.length; i++) {
+            enemyBullets[i].update(elapsedTime);
+        }
     }
 
     function updateEnemyEntry(elapsedTime) {
         enemyWaveTimer -= elapsedTime;
         updatePlaying(elapsedTime);
+        //
+        // if all enemies of previous wave were killed by the player, give a bonus
+        if (currStage === 2 && currWave < MyConstants.stages[currStage].enemyWaves.length) {
+            if (enemiesKilledThisWave === MyConstants.stages[currStage].enemyWaves[currWave].AMOUNT * 2) {
+                scoreSystem.waveCleared(lastKilledEnemyPosition, bonusPointsToRender);
+                soundSystem.bonusSuccess();
+                enemyWaveTimer = 0;
+            }
+        }
+
         if (enemyWaveTimer <= 0) {
-            let numEnemiesThisWave = MyConstants.stages[currStage].enemyWaves[currWave].AMOUNT;
-            for (;nextEnemyToEnter < numEnemiesSoFar + numEnemiesThisWave; nextEnemyToEnter++) {
-                enemies[nextEnemyToEnter].mode = 'entry';
-            }
-            numEnemiesSoFar += numEnemiesThisWave;
             //
-            // if there are more waves to add, reset countdown otherwise change internal update
-            if (currWave < MyConstants.stages[currStage].enemyWaves.length-1) {
-                currWave++;
-                enemyWaveTimer += MyConstants.stages[currStage].WAVE_FREQUENCY;
+            // if challenge stage, delete previous wave of enemies before sending next wave
+            if (currStage === 2) {
+                numEnemiesSoFar = 0;
+                nextEnemyToEnter = 0;
+                let keepMe = [];
+                for (let i = 0; i < enemies.length; i++) {
+                    if (enemies[i].mode === 'standby') {
+                        keepMe.push(enemies[i]);
+                    }
+                }
+                enemies = keepMe;
             }
-            else {
-                internalUpdate = updatePlaying;
+            if (enemies.length > 0) {
+                let numEnemiesThisWave = MyConstants.stages[currStage].enemyWaves[currWave].AMOUNT;
+                for (;nextEnemyToEnter < numEnemiesSoFar + numEnemiesThisWave; nextEnemyToEnter++) {
+                    //
+                    // if challenge stage, send waves two at a time in bonus mode
+                    if (currStage === 2) {
+                        enemies[nextEnemyToEnter].mode = 'bonus';
+                        enemies[nextEnemyToEnter + numEnemiesThisWave].mode = 'bonus';
+                    }
+                    else {
+                        enemies[nextEnemyToEnter].mode = 'entry';
+                    }
+                }
+                numEnemiesSoFar += numEnemiesThisWave;
+                currWave++;
+                enemiesKilledThisWave = 0;
+                // if challenge stage, increment wave twice because we send out two enemy waves at once
+                if (currStage === 2) {
+                    currWave++;
+                }
+                //
+                // if there are more waves to add, reset countdown otherwise change internal update
+                if (currWave < MyConstants.stages[currStage].enemyWaves.length) {
+                    enemyWaveTimer += MyConstants.stages[currStage].WAVE_FREQUENCY;
+                }
+                else {
+                    // if challenge stage, we want to give time for the last wave to get off screen
+                    if (currStage === 2) {
+                        enemyWaveTimer += MyConstants.stages[currStage].WAVE_FREQUENCY + 4000;
+                    }
+                    else {
+                        internalUpdate = updatePlaying;
+                    }
+                }
             }
         }
     }
@@ -292,8 +496,41 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         }
         if (enemies.length > 0) {
             if (enemiesReadyToAttack) {
-                enemies[Random.nextRange(0, enemies.length-1)].mode = 'attack';
-                enemies[Random.nextRange(0, enemies.length-1)].mode = 'attack';
+                let enemyOne = Random.nextRange(0, enemies.length-1);
+                let enemyTwo = Random.nextRange(0, enemies.length-1);
+                if (enemyOne !== enemyTwo) {
+                    soundSystem.enemyFlying();
+                    enemies[enemyOne].mode = 'attack';
+                    enemies[enemyTwo].mode = 'attack';
+                }
+                else {
+                    soundSystem.enemyFlying();
+                    enemies[enemyOne].mode = 'attack';
+                }
+            }
+        }
+        // if no enemies remain, go to next stage
+        else {
+            shipControlsOff();
+            //
+            // if transitioning from challenge stage, add and render bonus for total enemies hit during challenge stage
+            if (currStage === 2) {
+                currStage = (currStage+1) % 3;
+                soundSystem.themeSong();
+                scoreSystem.challengeBonus(enemiesHitThisStage);
+                internalUpdate = updateChallengeStats;
+                internalRender = renderChallengeStats;
+            }
+            else {
+                currStage = (currStage+1) % 3;
+                resetValues();
+                soundSystem.newLevel();
+                internalUpdate = updateLevelTransition;
+                internalRender = renderLevelTransition;
+            }
+            // if next stage is challenge stage, increase player fire rate
+            if (currStage === 2) {
+                playerShip.shootFrequency = MyConstants.playerShip.RAPID_FIRE;
             }
         }
     }
@@ -302,44 +539,66 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         //
         // check if enemy ship has been shot by player ship
         for (let i = 0; i < enemies.length; i++) {
-            let bulletIdx = checkIfShot(enemies[i], playerShip.shots);
-            if (bulletIdx) {
-                soundSystem.enemyKill();
-                // console.log(`You Shot Enemy ${enemies[i].id}!`);
+            let playerBulletIdx = checkIfShot(enemies[i], playerShip.shots);
+            if (playerBulletIdx) {
+                if (enemies[i].type === 'purpleBoss' && enemies[i].mode !== 'grid') {
+                    soundSystem.bossKill();
+                }
                 if (enemies[i].type === 'greenBoss') {
                     enemies[i].type = 'purpleBoss';
                     enemies[i].image = images['purpleBoss'];
                 }
                 else {
+                    soundSystem.enemyKill();
+                    enemiesKilledThisWave++;
+                    lastKilledEnemyPosition = {x: enemies[i].center.x, y: enemies[i].center.y};
                     numEnemiesSoFar--;
                     nextEnemyToEnter--;
-                    scoreSystem.enemyKilled(enemies[i]);
+                    scoreSystem.enemyKilled(enemies[i], bonusPointsToRender);
                     particleSystem.enemyExplosion(enemies[i].center);
                     enemies.splice(i, 1);
                 }
-                playerShip.shots[bulletIdx-1].hitEnemy = true;
+                playerShip.shots[playerBulletIdx-1].hitShip = true;
                 totalEnemiesHit++;
+                enemiesHitThisStage++;
             }
         }
+        // TODO: implement live system, with gaining lives after so many points
         //
         // check if player ship has been shot by enemy ship
-        // for (let i = 0; i < enemies.length; i++) {
-        //     if (checkIfShot(playerShip, enemies[i].shots)) {
-        //         // explode playerShip, then end game
-        //         return
-        //     }
-        // }
+        let enemyBulletIdx = checkIfShot(playerShip, enemyBullets);
+        if (enemyBulletIdx) {
+            enemyBullets[enemyBulletIdx-1].hitShip = true;
+            shipControlsOff();
+            soundSystem.playerDie();
+            particleSystem.playerExplosion(playerShip.center);
+            internalUpdate = updateGameOver;
+            internalRender = renderGameOver;
+        }
         //
         // check if player ship has crashed into enemy ship
         let enemyIdx = checkForCrash(playerShip, enemies);
         if (enemyIdx) {
             // explode enemyThatCrashed and playerShip, then end game
-            console.log(`Enemy ${enemies[enemyIdx-1].id} Crashed Into You!`);
             soundSystem.playerDie();
+            shipControlsOff();
             particleSystem.playerExplosion(playerShip.center);
             particleSystem.enemyExplosion(enemies[enemyIdx-1].center);
             enemies.splice(enemyIdx-1, 1);
+            internalUpdate = updateGameOver;
+            internalRender = renderGameOver;
         }
+    }
+
+    function updateBonusPointsToRender(elapsedTime) {
+        let keepMe = [];
+        for (let i = 0; i < bonusPointsToRender.length; i++) {
+            bonusPointsToRender[i].timeAlive += elapsedTime;
+            if (bonusPointsToRender[i].timeAlive < bonusPointsToRender[i].lifetime) {
+                keepMe.push(bonusPointsToRender[i]);
+            }
+        }
+        bonusPointsToRender = keepMe;
     }
 
     function updatePlaying(elapsedTime) {
@@ -348,6 +607,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         updateCollisions();
         updateBullets(elapsedTime);
         updateEnemies(elapsedTime);
+        updateBonusPointsToRender(elapsedTime);
     }
 
 
@@ -367,13 +627,79 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         }
     }
 
+    function renderLevelTransition() {
+        renderPlaying();
+        if (levelTransitionTimer < 2000) {
+            renderer.ScreenText.renderNextLevel(currStage);
+        }
+    }
+
+    function renderChallengeStats() {
+        graphics.clear();
+        renderer.ParticleSystem.render(particleSystem.particles);
+        renderer.ScreenText.renderScore(scoreSystem.score);
+        let sectionsToRender = 1;
+        if (challengeStatsDisplayTimer <= 1750) {
+            sectionsToRender = 4;
+        }
+        else if (challengeStatsDisplayTimer <= 3500) {
+            sectionsToRender = 3;
+        }
+        else if (challengeStatsDisplayTimer <= 5250) {
+            sectionsToRender = 2;
+        }
+        renderer.ScreenText.renderChallengeStats(enemiesHitThisStage, sectionsToRender);
+    }
+
+    function renderGameOver() {
+        graphics.clear();
+        renderer.ParticleSystem.render(particleSystem.particles);
+        renderer.Ships.renderEnemyShips(enemies);
+    }
+
+    function renderGameOverSummary() {
+        // TODO: play sound effect when each word is added to screen
+        graphics.clear();
+        renderer.ParticleSystem.render(particleSystem.particles);
+        let renderAmount = 1;
+        if (gameSummaryTimer <= 0) {renderAmount = 12;}
+        else if (gameSummaryTimer <= 1000) {renderAmount = 11;}
+        else if (gameSummaryTimer <= 2000) {renderAmount = 10;}
+        else if (gameSummaryTimer <= 3000) {renderAmount = 9;}
+        else if (gameSummaryTimer <= 4000) {renderAmount = 8;}
+        else if (gameSummaryTimer <= 5000) {renderAmount = 7;}
+        else if (gameSummaryTimer <= 6000) {renderAmount = 6;}
+        else if (gameSummaryTimer <= 7000) {renderAmount = 5;}
+        else if (gameSummaryTimer <= 8000) {renderAmount = 4;}
+        else if (gameSummaryTimer <= 9000) {renderAmount = 3;}
+        else if (gameSummaryTimer <= 10000) {renderAmount = 2;}
+
+        if (gameSummaryTimer >= 11000) {
+            renderer.ScreenText.renderGameOver();
+        }
+        else {
+            renderer.ScreenText.renderGameSummary({
+                sectionsToRender: renderAmount,
+                initialScore: scoreSystem.score,
+                shotsFired: totalShots,
+                numHits: totalEnemiesHit,
+                hitMissRatio: ((totalEnemiesHit/totalShots) * 100).toFixed(1),
+                accuracyBonus: Math.round((totalEnemiesHit/totalShots) * scoreSystem.score),
+                finalScore: Math.round((totalEnemiesHit/totalShots) * scoreSystem.score) + scoreSystem.score
+            })
+        }
+    }
+
+
     function renderPlaying() {
         graphics.clear();
         renderer.ParticleSystem.render(particleSystem.particles);
         renderer.Ships.renderPlayerShip(playerShip);
         renderer.Ships.renderEnemyShips(enemies);
         renderer.Bullets.render(playerShip.shots);
+        renderer.Bullets.render(enemyBullets);
         renderer.ScreenText.renderScore(scoreSystem.score);
+        renderer.ScreenText.renderBonusPoints(bonusPointsToRender);
     }
 
 
@@ -408,14 +734,11 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
     }
 
     function initialize() {
-        scoreSystem.initialize();
+
     }
 
     function run() {
-        resetValues();
-        initializeEnemies();
-        soundSystem.playMusic(MyConstants.soundSettings.inGameMusic.VOLUME);
-        soundSystem.themeSong();
+        newGame();
         requestAnimationFrame(gameLoop);
     }
 

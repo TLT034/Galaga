@@ -3,6 +3,7 @@
 // Creates a PlayerShip object, with functions for managing state.
 //
 // spec = {
+//         id: int
 //         type: bee, butterfly, boss, bonus1, etc.
 //         image: image asset,
 //         center: { x: , y: },
@@ -10,9 +11,13 @@
 //         speed: float,
 //         shots: [bullet objects],
 //         shootSound: soundSystem sound effect,
-//         EntryPath: []
+//         entryPath: []
 //         attackPath: []
 //         gridPosition: { x: , y: }
+//         mode: AI mode,
+//         reentryPoint: point above canvas to return from after attacking
+//         shots: [],
+//         shootPositions: []
 // }
 //
 // --------------------------------------------------------------
@@ -57,6 +62,12 @@ MyGame.objects.EnemyShip = function(spec) {
                     moveToPosition(elapsedTime, spec.gridPosition);
                 }
                 break;
+            // challenge stage: fly path with no return
+            case 'bonus':
+                if (pathIdx < spec.entryPath.length) {
+                    moveToPosition(elapsedTime, spec.entryPath[pathIdx]);
+                }
+                break;
         }
     }
 
@@ -79,6 +90,13 @@ MyGame.objects.EnemyShip = function(spec) {
             spec.center.y = destination.y;
             pathIdx++;
             //
+            // if the current enemy position is a shooting position, then shoot
+            for (let i = 0; i < spec.shootPositions.length; i++) {
+                if (spec.center.x === spec.shootPositions[i].x && spec.center.y === spec.shootPositions[i].y) {
+                    shoot();
+                }
+            }
+            //
             // if the enemy is attacking and it made it to its last point in path, return to grid from top of screen
             if (spec.mode === 'attack' && pathIdx === spec.attackPath.length) {
                 spec.center.x = spec.reentryPoint.x;
@@ -98,6 +116,20 @@ MyGame.objects.EnemyShip = function(spec) {
         }
     }
 
+    function shoot() {
+        spec.addBullet(MyGame.objects.Bullet({
+            image: MyGame.assets.images['enemyBullet'],
+            center: { x: spec.center.x, y: spec.center.y - spec.size.height/2},
+            size: {
+                width: MyGame.graphics.canvas.width * MyConstants.enemyBullet.WIDTH,
+                height: MyGame.graphics.canvas.height * MyConstants.enemyBullet.HEIGHT
+            },
+            speed: MyGame.graphics.canvas.width * MyConstants.enemyBullet.SPEED,
+            rotation: spec.rotation,
+            hitShip: false
+        }));
+    }
+
 
 
     return {
@@ -109,6 +141,7 @@ MyGame.objects.EnemyShip = function(spec) {
         get mode() { return spec.mode; },
         set mode(m) { spec.mode = m; },
         get speed () { return spec.speed; },
+        get shots() { return spec.shots; },
         get swayDirection() { return swayDirection; },
         set swayDirection(d) { swayDirection = d; },
         get gridPosition() { return spec.gridPosition; },
