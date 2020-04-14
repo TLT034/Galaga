@@ -1,0 +1,6 @@
+{
+  "name": "cs5410-tristan-thomas-final-project",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
