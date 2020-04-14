@@ -1,6 +1,7 @@
 MyGame.systems.ScoreSystem = function() {
     'use strict';
     let score;
+    refreshHighScoreList(JSON.parse(localStorage.getItem('highScores')));
 
     function initialize() {
         score = 0;
@@ -68,6 +69,69 @@ MyGame.systems.ScoreSystem = function() {
         });
     }
 
+    function checkForHighScore(latestScore) {
+        let highScores = [];
+        let previousScores = JSON.parse(localStorage.getItem('highScores'));
+
+        if (previousScores !== null) {
+            if (Array.isArray(previousScores)){
+                highScores = previousScores;
+            }
+            else {
+                highScores = [parseInt(previousScores)];
+            }
+        }
+
+        // if there are high scores, get the lowest score
+        let lowestScore = 0;
+        if (highScores.length > 0) {
+            lowestScore = Math.min(...highScores);
+        }
+
+        // if the last score is better than the lowest score or there are less than 5 high scores,
+        // add last score to high scores
+        if (latestScore > lowestScore || highScores.length < 5) {
+            highScores.push(latestScore);
+            highScores.sort(function (a, b) {
+                return b - a
+            }); //sort in descending order
+
+            // if there are more than 5 high scores, remove the lowest
+            if (highScores.length > 5) {
+                highScores.pop()
+            }
+            localStorage.setItem('highScores', JSON.stringify(highScores));
+        }
+
+        refreshHighScoreList(highScores);
+    }
+
+    function refreshHighScoreList(highScoreList) {
+        let htmlNode = document.getElementById('high-score-list');
+        htmlNode.innerHTML = '';
+        // if there exists any high scores
+        if (highScoreList) {
+            for (let i = 0; i < highScoreList.length; i++) {
+                let listItem = document.createElement('li');
+                listItem.appendChild(document.createTextNode(`${i+1}:\t${highScoreList[i]}`));
+                htmlNode.appendChild(listItem);
+            }
+            let emptyRanks = 5 - highScoreList.length;
+            for (let i = 0; i < emptyRanks; i++) {
+                let listItem = document.createElement('li');
+                listItem.appendChild(document.createTextNode(`${i+1+5-emptyRanks}:\t${0}`));
+                htmlNode.appendChild(listItem);
+            }
+        }
+        else {
+            for (let i = 1; i < 6; i++) {
+                let listItem = document.createElement('li');
+                listItem.appendChild(document.createTextNode(`${i}:\t${0}`));
+                htmlNode.appendChild(listItem);
+            }
+        }
+    }
+
 
 
     return {
@@ -75,8 +139,8 @@ MyGame.systems.ScoreSystem = function() {
         enemyKilled: enemyKilled,
         challengeBonus: challengeBonus,
         waveCleared: waveCleared,
+        checkForHighScore: checkForHighScore,
 
         get score() {return score},
-
     }
 }();

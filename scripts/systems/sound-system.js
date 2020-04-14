@@ -26,6 +26,10 @@ MyGame.systems.SoundSystem = function(sounds) {
     sounds['newLevel'].loop = MyConstants.soundSettings.newLevel.LOOP;
     sounds['bonusSuccess'].volume = MyConstants.soundSettings.bonusSuccess.VOLUME;
     sounds['bonusSuccess'].loop = MyConstants.soundSettings.bonusSuccess.LOOP;
+    sounds['newText'].volume = MyConstants.soundSettings.newText.VOLUME;
+    sounds['newText'].loop = MyConstants.soundSettings.newText.LOOP;
+    sounds['playerDie'].volume = MyConstants.soundSettings.playerDie.VOLUME;
+    sounds['playerDie'].loop = MyConstants.soundSettings.playerDie.LOOP;
 
 
 
@@ -112,7 +116,7 @@ MyGame.systems.SoundSystem = function(sounds) {
 
     that.playerDie = function () {
         if (MyGame.soundEnabled) {
-            sounds['explosion'].play();
+            sounds['playerDie'].play();
         }
     };
 
@@ -126,5 +130,16 @@ MyGame.systems.SoundSystem = function(sounds) {
         }
     };
 
+    that.newText = function () {
+        if (MyGame.soundEnabled) {
+            sounds['newText'].pause();
+            sounds['newText'].currentTime = 0;
+            sounds['newText'].play().catch(e => {
+                // do nothing
+            });
+        }
+    };
+
     return that;
+
 }(MyGame.assets.sounds);

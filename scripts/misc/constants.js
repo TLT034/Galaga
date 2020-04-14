@@ -34,6 +34,14 @@ let MyConstants = Object.freeze({
         AVG_SPEED:   .00003,
         STDEV_SPEED: .00001,
     },
+    newShip: {
+        AVG_SIZE: .004717,
+        STDEV_SIZE: .00171,
+        AVG_LIFE: .5,
+        STDEV_LIFE: .2,
+        AVG_SPEED:   .00003,
+        STDEV_SPEED: .00001
+    },
 
     //
     // objects
@@ -43,6 +51,7 @@ let MyConstants = Object.freeze({
         SPEED: .000588,
         NORMAL_FIRE_RATE: 300,
         RAPID_FIRE: 200,
+        SIZE_OF_EXTRA_LIVES: .04
     },
     playerBullet: {
         WIDTH: .00428,
@@ -397,12 +406,14 @@ let MyConstants = Object.freeze({
         TRANSFORM_GROUP_2: 2000,
         TRANSFORM_GROUP_3: 3000,
         CHALLENGING_STAGE_HIT: 100,
+        EXTRA_LIVE_MILESTONES: [15000, 45000, 75000, 150000, 250000, 500000, 1000000]
     },
 
     //
     // Screen Text Sizes
     textSizes: {
         TINY: .02,
+        XSMALL: .03,
         SMALL: .0425,
         MEDIUM: .06,
         LARGE: .1,
@@ -455,6 +466,14 @@ let MyConstants = Object.freeze({
         },
         bonusSuccess: {
             VOLUME: .75,
+            LOOP: false
+        },
+        newText: {
+            VOLUME: 1,
+            LOOP: false
+        },
+        playerDie: {
+            VOLUME: 1,
             LOOP: false
         },
     }

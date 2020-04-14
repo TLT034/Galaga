@@ -128,6 +128,23 @@ MyGame.render.ScreenText = (function(graphics) {
             };
             graphics.drawText(spec.text, position, spec.font, spec.fill, alignment);
         }
+        graphics.drawText(
+            'Press Esc for main menu',
+            {x: graphics.canvas.width * .025, y: graphics.canvas.height * .975},
+            `${Math.floor(graphics.canvas.width * MyConstants.textSizes.XSMALL)}px Orbitron`,
+        );
+    }
+
+    function renderGetReady() {
+        let spec = {
+            font: `${Math.floor(graphics.canvas.width * MyConstants.textSizes.LARGE)}px Orbitron`,
+            fill: '#f5eaea',
+            text: "Get Ready!"
+        };
+        let textWidth = graphics.measureTextWidth(spec);
+        let textHeight = graphics.measureTextHeight(spec);
+        let position = {x: graphics.canvas.width/2 - textWidth/2, y: graphics.canvas.height/2 - textHeight};
+        graphics.drawText(spec.text, position, spec.font);
     }
 
 
@@ -139,6 +156,7 @@ MyGame.render.ScreenText = (function(graphics) {
         renderChallengeStats: renderChallengeStats,
         renderNextLevel: renderNextLevel,
         renderBonusPoints: renderBonusPoints,
-        renderGameSummary: renderGameSummary
+        renderGameSummary: renderGameSummary,
+        renderGetReady: renderGetReady
     };
 }(MyGame.graphics));

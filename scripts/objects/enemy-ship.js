@@ -62,12 +62,17 @@ MyGame.objects.EnemyShip = function(spec) {
                     moveToPosition(elapsedTime, spec.gridPosition);
                 }
                 break;
+            // player death: return to grid positions and stay in grid
+            case 'playerDeath':
+                moveToPosition(elapsedTime, spec.gridPosition);
+                break;
             // challenge stage: fly path with no return
             case 'bonus':
                 if (pathIdx < spec.entryPath.length) {
                     moveToPosition(elapsedTime, spec.entryPath[pathIdx]);
                 }
                 break;
+
         }
     }
 

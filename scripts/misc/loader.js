@@ -78,6 +78,11 @@ MyGame.loader = (function() {
             onComplete: null
         },
         {
+            scripts: ['../screens/controls'],
+            message: 'Controls loaded',
+            onComplete: null
+        },
+        {
             scripts: ['../screens/main-menu', '../screens/game-play', '../screens/controls',
                 '../screens/highscores', '../screens/credits',],
             message: 'All screens loaded',
@@ -197,7 +202,7 @@ MyGame.loader = (function() {
         },
         {
             type: 'sound',
-            key: 'explosion',
+            key: 'playerDie',
             source: '/assets/sounds/explosion.mp3'
         },
         {
@@ -224,6 +229,11 @@ MyGame.loader = (function() {
             type: 'sound',
             key: 'themeSong',
             source: '/assets/sounds/theme-song.mp3'
+        },
+        {
+            type: 'sound',
+            key: 'newText',
+            source: '/assets/sounds/new-text.mp3'
         },
     ];
 

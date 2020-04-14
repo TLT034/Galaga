@@ -4,10 +4,20 @@ MyGame.screens['controls'] = (function(game, controls, soundSystem) {
     let waitingForInput = false;
 
     function initialize() {
-        // Initialize the controls to the arrow keys
-        MyGame.controls['Shoot'] = ' ';
-        MyGame.controls['Move Left'] = 'ArrowLeft';
-        MyGame.controls['Move Right'] = 'ArrowRight';
+        let savedControls = JSON.parse(localStorage.getItem('controls'));
+        if (savedControls) {
+            controls['Shoot'] = savedControls['Shoot'];
+            controls['Move Left'] = savedControls['Move Left'];
+            controls['Move Right'] = savedControls['Move Right'];
+        }
+         else {
+            // Initialize the controls to the arrow keys
+            controls['Shoot'] = ' ';
+            controls['Move Left'] = 'ArrowLeft';
+            controls['Move Right'] = 'ArrowRight';
+            localStorage.setItem('controls', JSON.stringify(controls));
+        }
+
 
         document.getElementById('shoot-map-button').addEventListener(
             'click',
@@ -65,6 +75,7 @@ MyGame.screens['controls'] = (function(game, controls, soundSystem) {
         function addKey(event) {
             if (waitingForInput) {
                 controls[control] = event.key;
+                localStorage.setItem('controls', JSON.stringify(controls));
                 soundSystem.buttonClick();
             }
 

@@ -89,7 +89,7 @@ ul.menu li button:active {
     margin: 5% 0 10% 0;
 }
 #credits p {
-    margin: 0 0 2% 0;
+    margin:  0;
     padding: 0;
 }
 
@@ -113,11 +113,12 @@ ul.menu li button:active {
 }
 
 #high-scores ol {
-    text-align: center;
+    text-align: left;
     margin: 0;
-    padding: 0;
+    padding-left: 35%;
     list-style: none;
     color: #f5eaea;
+    white-space: pre;
 }
 
 #high-score-list {
@@ -126,5 +127,5 @@ ul.menu li button:active {
 
 #high-scores h1 {
     margin-bottom: 0;
+    font-size: 3em;
 }
-

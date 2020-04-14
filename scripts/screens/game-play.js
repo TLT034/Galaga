@@ -22,7 +22,13 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         totalEnemiesHit,
         currStage,
         lastKilledEnemyPosition,
-        enemies;
+        enemies,
+        extraLives,
+        extraLifeMilestoneIdx,
+        deathTransitionTimer,
+        internalUpdateWhenPlayerDied,
+        internalRenderWhenPlayerDied,
+        numSummarySoundEffectsPlayed;
 
 
     // values that are reset when resetValues is called (i.e. every stage)
@@ -61,6 +67,9 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         currStage = 0;
         lastKilledEnemyPosition = null;
         enemies = [];
+        extraLives = 2;
+        extraLifeMilestoneIdx = 0;
+        numSummarySoundEffectsPlayed = 0;
 
         resetValues();
     }
@@ -73,23 +82,6 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         countdown = 7000;
         gameOverTimer = 3000;
         gameSummaryTimer = 14000;
-
-        playerShip = objects.PlayerShip({
-            image: images['playerShip'],
-            center: { x: graphics.canvas.width/2, y: graphics.canvas.height * .9 },
-            rotation: 0,
-            size: {
-                width: graphics.canvas.width * MyConstants.playerShip.WIDTH,
-                height: graphics.canvas.height * MyConstants.playerShip.HEIGHT
-            },
-            speed: graphics.canvas.width * MyConstants.playerShip.SPEED,
-            shots: [],
-            shootSound: soundSystem.playerShoot,
-            shootFrequency: MyConstants.playerShip.NORMAL_FIRE_RATE,
-            prevShotTime: 0,
-            incrementShotCount: incrementTotalShots
-        });
-
         enemySwaySwitchTimer = graphics.canvas.width * MyConstants.enemy.SWAY_SWITCH_TIME/2;
         enemyWaveTimer = 0;
         entryWaveNum = 0;
@@ -105,6 +97,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         bonusPointsToRender = [];
         enemyBullets = [];
 
+        resetPlayerShip();
         initializeEnemies();
     }
 
@@ -126,16 +119,34 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
 
     function shipControlsOn() {
         myKeyboard.register(controls['Move Left'], function(elapsedTime) {
-            if (playerShip.center.x - playerShip.size.width/2 > graphics.canvas.width - graphics.canvas.width * .95) {
+            if (playerShip.center.x - playerShip.size.width/2 > graphics.canvas.width - graphics.canvas.width * .97) {
                 playerShip.moveLeft(elapsedTime);
             }
         });
         myKeyboard.register(controls['Move Right'], function(elapsedTime) {
-            if (playerShip.center.x + playerShip.size.width/2 < graphics.canvas.width * .95) {
+            if (playerShip.center.x + playerShip.size.width/2 < graphics.canvas.width * .97) {
                 playerShip.moveRight(elapsedTime);
             }
         });
         myKeyboard.register(controls['Shoot'], playerShip.shoot);
+    }
+
+    function resetPlayerShip() {
+        playerShip = objects.PlayerShip({
+            image: images['playerShip'],
+            center: { x: graphics.canvas.width/2, y: graphics.canvas.height * .9 },
+            rotation: 0,
+            size: {
+                width: graphics.canvas.width * MyConstants.playerShip.WIDTH,
+                height: graphics.canvas.height * MyConstants.playerShip.HEIGHT
+            },
+            speed: graphics.canvas.width * MyConstants.playerShip.SPEED,
+            shots: [],
+            shootSound: soundSystem.playerShoot,
+            shootFrequency: MyConstants.playerShip.NORMAL_FIRE_RATE,
+            prevShotTime: 0,
+            incrementShotCount: incrementTotalShots
+        });
     }
 
     function incrementTotalShots() {
@@ -300,6 +311,24 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         return false;
     }
 
+    function playerDeath() {
+        shipControlsOff();
+        soundSystem.playerDie();
+        particleSystem.playerExplosion(playerShip.center);
+        resetPlayerShip();
+        enemyBullets = [];
+        for (let i = 0; i < enemies.length; i++) {
+            if (enemies[i].mode !== 'standby') {
+                enemies[i].mode = 'playerDeath';
+            }
+        }
+        deathTransitionTimer = 5000;
+        extraLives--;
+        internalUpdateWhenPlayerDied = internalUpdate;
+        internalRenderWhenPlayerDied = internalRender;
+        internalUpdate = updatePlayerDeathTransition;
+        internalRender = renderPlayerDeathTransition;
+    }
 
 
 
@@ -348,20 +377,34 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
 
     }
 
-    function updateGameOver(elapsedTime) {
-        gameOverTimer -= elapsedTime;
-        updateEnemies(elapsedTime);
+    function updatePlayerDeathTransition(elapsedTime) {
+        deathTransitionTimer -= elapsedTime;
         particleSystem.stars(elapsedTime);
         particleSystem.updateParticleLifetime(elapsedTime);
+        updateEnemies(elapsedTime);
         //
-        // Once the game over  timer is done, switch to game over summary
-        if (gameOverTimer <= 0) {
-            myKeyboard.register('Escape', function () {
-                cancelNextRequest = true;
-                game.showScreen('main-menu');
-            });
-            internalUpdate = updateGameOverSummary;
-            internalRender = renderGameOverSummary;
+        // Once the death transition timer is done, switch to game over summary or continue playing
+        if (deathTransitionTimer <= 0) {
+            if (extraLives < 0) {
+                internalUpdate = updateGameOverSummary;
+                internalRender = renderGameOverSummary;
+                myKeyboard.register('Escape', function () {
+                    cancelNextRequest = true;
+                    game.showScreen('main-menu');
+                });
+                scoreSystem.checkForHighScore(
+                    Math.round((totalEnemiesHit/totalShots) * scoreSystem.score/2) + scoreSystem.score);
+            }
+            else {
+                for (let i = 0; i < enemies.length; i++) {
+                    if (enemies[i].mode === 'playerDeath') {
+                        enemies[i].mode = 'grid';
+                    }
+                }
+                shipControlsOn();
+                internalUpdate = internalUpdateWhenPlayerDied;
+                internalRender = internalRenderWhenPlayerDied;
+            }
         }
     }
 
@@ -495,7 +538,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
             enemies[i].update(elapsedTime);
         }
         if (enemies.length > 0) {
-            if (enemiesReadyToAttack) {
+            if (enemiesReadyToAttack && internalUpdate !== updatePlayerDeathTransition) {
                 let enemyOne = Random.nextRange(0, enemies.length-1);
                 let enemyTwo = Random.nextRange(0, enemies.length-1);
                 if (enemyOne !== enemyTwo) {
@@ -510,7 +553,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
             }
         }
         // if no enemies remain, go to next stage
-        else {
+        else if (internalUpdate !== updatePlayerDeathTransition) {
             shipControlsOff();
             //
             // if transitioning from challenge stage, add and render bonus for total enemies hit during challenge stage
@@ -550,12 +593,24 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                 }
                 else {
                     soundSystem.enemyKill();
+                    particleSystem.enemyExplosion(enemies[i].center);
                     enemiesKilledThisWave++;
                     lastKilledEnemyPosition = {x: enemies[i].center.x, y: enemies[i].center.y};
+                    // enemy will be deleted, so decrement these values so the enemy entry isn't affected
                     numEnemiesSoFar--;
                     nextEnemyToEnter--;
+                    // update score, and check for extra life milestone
                     scoreSystem.enemyKilled(enemies[i], bonusPointsToRender);
-                    particleSystem.enemyExplosion(enemies[i].center);
+                    if (scoreSystem.score >= MyConstants.scoring.EXTRA_LIVE_MILESTONES[extraLifeMilestoneIdx]) {
+                        extraLives++;
+                        extraLifeMilestoneIdx++;
+                        soundSystem.bonusSuccess();
+                        particleSystem.shipAwarded({
+                            x: graphics.canvas.width * .97 -
+                                (extraLives * MyConstants.playerShip.SIZE_OF_EXTRA_LIVES * graphics.canvas.width * 1.1),
+                            y: graphics.canvas.height * .97})
+                    }
+                    // delete enemy
                     enemies.splice(i, 1);
                 }
                 playerShip.shots[playerBulletIdx-1].hitShip = true;
@@ -563,30 +618,22 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                 enemiesHitThisStage++;
             }
         }
-        // TODO: implement live system, with gaining lives after so many points
         //
         // check if player ship has been shot by enemy ship
         let enemyBulletIdx = checkIfShot(playerShip, enemyBullets);
         if (enemyBulletIdx) {
-            enemyBullets[enemyBulletIdx-1].hitShip = true;
-            shipControlsOff();
-            soundSystem.playerDie();
-            particleSystem.playerExplosion(playerShip.center);
-            internalUpdate = updateGameOver;
-            internalRender = renderGameOver;
+            playerDeath()
         }
         //
         // check if player ship has crashed into enemy ship
         let enemyIdx = checkForCrash(playerShip, enemies);
         if (enemyIdx) {
-            // explode enemyThatCrashed and playerShip, then end game
-            soundSystem.playerDie();
-            shipControlsOff();
-            particleSystem.playerExplosion(playerShip.center);
+            // enemy will be deleted, so decrement these values so the enemy entry isn't affected
+            numEnemiesSoFar--;
+            nextEnemyToEnter--;
             particleSystem.enemyExplosion(enemies[enemyIdx-1].center);
             enemies.splice(enemyIdx-1, 1);
-            internalUpdate = updateGameOver;
-            internalRender = renderGameOver;
+            playerDeath();
         }
     }
 
@@ -651,16 +698,23 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         renderer.ScreenText.renderChallengeStats(enemiesHitThisStage, sectionsToRender);
     }
 
-    function renderGameOver() {
+    function renderPlayerDeathTransition() {
         graphics.clear();
         renderer.ParticleSystem.render(particleSystem.particles);
+        renderer.Ships.renderPlayerLifeShips(extraLives, playerShip.image);
         renderer.Ships.renderEnemyShips(enemies);
+        renderer.ScreenText.renderScore(scoreSystem.score);
+        // if not dead, render 'Get Ready' text
+        if (deathTransitionTimer <= 1500 && extraLives >= 0) {
+            renderer.Ships.renderPlayerShip(playerShip);
+            renderer.ScreenText.renderGetReady();
+        }
     }
 
     function renderGameOverSummary() {
-        // TODO: play sound effect when each word is added to screen
         graphics.clear();
         renderer.ParticleSystem.render(particleSystem.particles);
+
         let renderAmount = 1;
         if (gameSummaryTimer <= 0) {renderAmount = 12;}
         else if (gameSummaryTimer <= 1000) {renderAmount = 11;}
@@ -674,6 +728,11 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         else if (gameSummaryTimer <= 9000) {renderAmount = 3;}
         else if (gameSummaryTimer <= 10000) {renderAmount = 2;}
 
+        if (numSummarySoundEffectsPlayed < (renderAmount-1)/2) {
+            numSummarySoundEffectsPlayed++;
+            soundSystem.newText();
+        }
+
         if (gameSummaryTimer >= 11000) {
             renderer.ScreenText.renderGameOver();
         }
@@ -684,8 +743,8 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
                 shotsFired: totalShots,
                 numHits: totalEnemiesHit,
                 hitMissRatio: ((totalEnemiesHit/totalShots) * 100).toFixed(1),
-                accuracyBonus: Math.round((totalEnemiesHit/totalShots) * scoreSystem.score),
-                finalScore: Math.round((totalEnemiesHit/totalShots) * scoreSystem.score) + scoreSystem.score
+                accuracyBonus: Math.round((totalEnemiesHit/totalShots) * scoreSystem.score/2),
+                finalScore: Math.round((totalEnemiesHit/totalShots) * scoreSystem.score/2) + scoreSystem.score
             })
         }
     }
@@ -695,6 +754,7 @@ MyGame.screens['game-play'] = (function(game, objects, renderer, graphics, input
         graphics.clear();
         renderer.ParticleSystem.render(particleSystem.particles);
         renderer.Ships.renderPlayerShip(playerShip);
+        renderer.Ships.renderPlayerLifeShips(extraLives, playerShip.image);
         renderer.Ships.renderEnemyShips(enemies);
         renderer.Bullets.render(playerShip.shots);
         renderer.Bullets.render(enemyBullets);

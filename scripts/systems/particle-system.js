@@ -1,6 +1,6 @@
 MyGame.systems.ParticleSystem = function(graphics, images) {
     let bgParticles = [];
-    let explosionParticles = [];
+    let particles = [];
 
 
     // Creates an individual particle
@@ -81,7 +81,7 @@ MyGame.systems.ParticleSystem = function(graphics, images) {
                 lifetime: Random.nextGaussian(lifeAvg, lifeStdev),
                 alive: 0
             });
-            explosionParticles.push(p);
+            particles.push(p);
         }
     }
     //
@@ -107,9 +107,36 @@ MyGame.systems.ParticleSystem = function(graphics, images) {
                 lifetime: Random.nextGaussian(lifeAvg, lifeStdev),
                 alive: 0
             });
-            explosionParticles.push(p);
+            particles.push(p);
         }
     }
+    //
+    // stars when ship is awarded
+    function shipAwarded(position) {
+        for (let i = 0; i < 50; i++) {
+            let sizeAvg = graphics.canvas.width * MyConstants.newShip.AVG_SIZE;
+            let sizeStdev = graphics.canvas.width * MyConstants.newShip.STDEV_SIZE;
+            let size = Math.abs(Random.nextGaussian(sizeAvg, sizeStdev));
+            let lifeAvg = Math.floor(graphics.canvas.width * MyConstants.newShip.AVG_LIFE);
+            let lifeStdev = Math.floor(graphics.canvas.width * MyConstants.newShip.STDEV_LIFE);
+            let speedAvg = graphics.canvas.width * MyConstants.newShip.AVG_SPEED;
+            let speedStdev = graphics.canvas.width * MyConstants.newShip.STDEV_SPEED;
+            let direction = Random.nextCircleVector();
+
+            let p = create({
+                image: images['star'],
+                center: { x: position.x, y: position.y },
+                size: {width: size, height: size},
+                rotation: 0,
+                speed: Random.nextGaussian(speedAvg, speedStdev),
+                direction: {x: direction.x, y: direction.y},
+                lifetime: Random.nextGaussian(lifeAvg, lifeStdev),
+                alive: 0
+            });
+            particles.push(p);
+        }
+    }
+
     //
     // Removes any particles that have reached their lifetime
     function updateParticleLifetime(elapsedTime) {
@@ -122,12 +149,12 @@ MyGame.systems.ParticleSystem = function(graphics, images) {
         bgParticles = keepMe;
 
         let keepMe2 = [];
-        for (let i = 0; i < explosionParticles.length; i++) {
-            if (explosionParticles[i].update(elapsedTime)) {
-                keepMe2.push(explosionParticles[i]);
+        for (let i = 0; i < particles.length; i++) {
+            if (particles[i].update(elapsedTime)) {
+                keepMe2.push(particles[i]);
             }
         }
-        explosionParticles = keepMe2;
+        particles = keepMe2;
     }
 
 
@@ -136,11 +163,12 @@ MyGame.systems.ParticleSystem = function(graphics, images) {
         enemyExplosion: enemyExplosion,
         playerExplosion: playerExplosion,
         updateParticleLifetime: updateParticleLifetime,
+        shipAwarded: shipAwarded,
 
         get particles() {
             // when more particles return this instead of just bgParticles
             // return bgParticles.concat(otherParticles, otherParticles1,..., otherParticlesn)
-            return bgParticles.concat(explosionParticles);
+            return bgParticles.concat(particles);
         }
     };
 }(MyGame.graphics, MyGame.assets.images);
